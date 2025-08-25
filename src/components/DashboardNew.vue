@@ -34,7 +34,7 @@
           <div class="stat-info">
             <h3>Today's Orders</h3>
             <p class="stat-value">{{ dailyOrdersCount }}</p>
-            <span class="stat-amount">₱{{ formatPrice(dailyOrdersTotal) }}</span>
+            <span class="stat-amount">{{ formatPrice(dailyOrdersTotal) }}</span>
           </div>
         </button>
 
