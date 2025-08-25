@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMH Hardware Inventory System - Flowchart</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            width: 21cm; /* A4 width */
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        h1 { margin-bottom: 30px; }
+        h2 { margin: 40px 0 20px; }
+        .mermaid {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            overflow: visible;
+        }
+        .download-hint {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        .connector-legend {
+            margin: 20px auto;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-width: 600px;
+        }
+        .connector-legend h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            text-align: center;
+        }
+        .connector-legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .connector-legend li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .connector-legend li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+        }
+        @media print {
+            body { background: none; }
+            .container {
+                width: 100%;
+                box-shadow: none;
+                padding: 0;
+            }
+            .page-break { page-break-before: always; }
+            .connector-legend {
+                background: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MMH Hardware Inventory System - System Flowchart</h1>
+
+        <div class="connector-legend">
+            <h3>Off-Page Connector Guide</h3>
+            <ul>
+                <li>1️⃣ Navigation Flow Connection</li>
+                <li>2️⃣ Inventory Management Connection</li>
+                <li>3️⃣ Categories Connection</li>
+                <li>4️⃣ Reports Connection</li>
+                <li>5️⃣ Settings Connection</li>
+                <li>6️⃣ Stock Management Connection</li>
+                <li>7️⃣ Variance Connection</li>
+                <li>8️⃣ Database Connection</li>
+            </ul>
+        </div>
+        
+        <!-- Authentication Flow -->
+        <h2>1. Authentication Process</h2>
+        <div class="mermaid">
+            graph TD
+                A[Start] --> B{User Authentication}
+                B -->|Not Authenticated| C[Login/Register View]
+                C -->|Login Form| D[Email & Password Login]
+                C -->|Register Form| E[Create New Account]
+                C -->|Google Sign In| F[Google Authentication]
+                D --> G{Authentication Success?}
+                E --> G
+                F --> G
+                G -->|No| C
+                G -->|Yes| H[Main Dashboard]
+                H --> Z1((1️⃣))
+                style Z1 fill:#f9f,stroke:#333,stroke-width:2px
+        </div>
+
+        <!-- Navigation and Dashboard -->
+        <div class="page-break"></div>
+        <h2>2. Navigation and Dashboard</h2>
+        <div class="mermaid">
+            graph TD
+                Z1((1️⃣)) --> H[Main Dashboard]
+                H --> I[Dashboard View]
+                H --> J[Inventory View]
+                H --> K[Categories View]
+                H --> L[Reports View]
+                H --> M[Settings View]
+                
+                I --> I1[Total Items Count]
+                I --> I2[Categories Overview]
+                I --> I3[Low Stock Alerts]
+                I --> I4[Total Value Display]
+                
+                J --> Z2((2️⃣))
+                K --> Z3((3️⃣))
+                L --> Z4((4️⃣))
+                M --> Z5((5️⃣))
+                
+                style Z1 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z2 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z3 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z4 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z5 fill:#f9f,stroke:#333,stroke-width:2px
+        </div>
+
+        <!-- Inventory Management -->
+        <div class="page-break"></div>
+        <h2>3. Inventory Management</h2>
+        <div class="mermaid">
+            graph TD
+                Z2((2️⃣)) --> J[Inventory View]
+                J --> J1[View Items]
+                J --> J2[Add New Item]
+                J --> J3[Update Item]
+                J --> J4[Delete Item]
+                
+                J1 --> J5[Filter by Category]
+                J1 --> J6[Search Items]
+                
+                J2 --> J2a[Enter Item Details]
+                J2a --> J2b[Save to Database]
+                
+                J3 --> J3a[Update Quantity]
+                J3 --> J3b[Update Price]
+                J3 --> J3c[Update Usage]
+                
+                J3a --> Z6((6️⃣))
+                J3c --> Z7((7️⃣))
+                J2b & J3 & J4 --> Z8((8️⃣))
+                
+                style Z2 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z6 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z7 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z8 fill:#f9f,stroke:#333,stroke-width:2px
+        </div>
+
+        <!-- Categories and Reports -->
+        <div class="page-break"></div>
+        <h2>4. Categories and Reports Management</h2>
+        <div class="mermaid">
+            graph TD
+                Z3((3️⃣)) --> K[Categories View]
+                K --> K1[View Categories]
+                K --> K2[Category Statistics]
+                K2 --> K2a[Items per Category]
+                K2a --> K2b[Category Value]
+                
+                Z4((4️⃣)) --> L[Reports]
+                L --> L1[Generate Reports]
+                L1 --> L2[Export Summary]
+                L2 --> L3[Download Word Doc]
+                
+                style Z3 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z4 fill:#f9f,stroke:#333,stroke-width:2px
+        </div>
+
+        <!-- Stock and Variance Management -->
+        <div class="page-break"></div>
+        <h2>5. Stock and Variance Management</h2>
+        <div class="mermaid">
+            graph TD
+                Z6((6️⃣)) --> N{Check Stock Level}
+                N -->|Low Stock| O[Generate Alert]
+                N -->|Normal| P[Update Display]
+                
+                Z7((7️⃣)) --> Q[Calculate Variance]
+                Q --> R{Variance Status}
+                R -->|Negative| S[Show Loss Report]
+                R -->|Positive| T[Show Excess Report]
+                R -->|Zero| U[Normal Status]
+                
+                style Z6 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z7 fill:#f9f,stroke:#333,stroke-width:2px
+        </div>
+
+        <!-- Database Operations and Settings -->
+        <div class="page-break"></div>
+        <h2>6. Database Operations and Settings</h2>
+        <div class="mermaid">
+            graph TD
+                Z8((8️⃣)) --> V[Firebase Firestore]
+                V --> W{Operation Success?}
+                W -->|Yes| X[Show Success Toast]
+                W -->|No| Y[Show Error Toast]
+                
+                Z5((5️⃣)) --> M[Settings View]
+                M --> M1[User Settings]
+                M --> M2[Logout]
+                
+                style Z5 fill:#f9f,stroke:#333,stroke-width:2px
+                style Z8 fill:#f9f,stroke:#333,stroke-width:2px
+        </div>
+
+      
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                rankSpacing: 40,
+                nodeSpacing: 30
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,140 @@
+MMH Hardware Inventory System
+System Flowchart Documentation
+=====================================
+
+TABLE OF CONTENTS
+----------------
+1. Authentication Process
+2. Navigation and Dashboard
+3. Inventory Management
+4. Categories and Reports Management
+5. Stock and Variance Management
+6. Database Operations and Settings
+
+=====================================
+
+1. AUTHENTICATION PROCESS
+------------------------
+[Start] → [User Authentication]
+   ↓
+   ├─ Not Authenticated → [Login/Register View]
+   │     ├─ Login Form → [Email & Password Login]
+   │     ├─ Register Form → [Create New Account]
+   │     └─ Google Sign In → [Google Authentication]
+   │
+   └─ Authentication Success? → [Main Dashboard]
+         ↓
+         No → [Login/Register View]
+         Yes → [Main Dashboard] → (1) Navigation Flow
+
+=====================================
+
+2. NAVIGATION AND DASHBOARD
+--------------------------
+(1) Navigation Flow → [Main Dashboard]
+   ↓
+   ├─ [Dashboard View]
+   │   ├─ Total Items Count
+   │   ├─ Categories Overview
+   │   ├─ Low Stock Alerts
+   │   └─ Total Value Display
+   │
+   ├─ [Inventory View] → (2) Inventory Management
+   ├─ [Categories View] → (3) Categories Management
+   ├─ [Reports View] → (4) Reports Management
+   └─ [Settings View] → (5) Settings Management
+
+=====================================
+
+3. INVENTORY MANAGEMENT
+----------------------
+(2) Inventory Management → [Inventory View]
+   ↓
+   ├─ [View Items]
+   │   ├─ Filter by Category
+   │   └─ Search Items
+   │
+   ├─ [Add New Item]
+   │   ├─ Enter Item Details
+   │   └─ Save to Database
+   │
+   ├─ [Update Item]
+   │   ├─ Update Quantity → (6) Stock Management
+   │   ├─ Update Price
+   │   └─ Update Usage → (7) Variance Management
+   │
+   └─ [Delete Item]
+       ↓
+       All changes → (8) Database Operations
+
+=====================================
+
+4. CATEGORIES AND REPORTS MANAGEMENT
+----------------------------------
+(3) Categories Management → [Categories View]
+   ↓
+   ├─ [View Categories]
+   └─ [Category Statistics]
+       ├─ Items per Category
+       └─ Category Value
+
+(4) Reports Management → [Reports]
+   ↓
+   └─ [Generate Reports]
+       └─ [Export Summary]
+           └─ [Download Word Doc]
+
+=====================================
+
+5. STOCK AND VARIANCE MANAGEMENT
+------------------------------
+(6) Stock Management → [Check Stock Level]
+   ↓
+   ├─ Low Stock → [Generate Alert]
+   └─ Normal → [Update Display]
+
+(7) Variance Management → [Calculate Variance]
+   ↓
+   └─ [Variance Status]
+       ├─ Negative → [Show Loss Report]
+       ├─ Positive → [Show Excess Report]
+       └─ Zero → [Normal Status]
+
+=====================================
+
+6. DATABASE OPERATIONS AND SETTINGS
+---------------------------------
+(8) Database Operations → [Firebase Firestore]
+   ↓
+   └─ [Operation Success?]
+       ├─ Yes → [Show Success Toast]
+       └─ No → [Show Error Toast]
+
+(5) Settings Management → [Settings View]
+   ↓
+   ├─ [User Settings]
+   └─ [Logout]
+
+=====================================
+
+CONNECTOR LEGEND
+---------------
+1️⃣ Navigation Flow Connection
+2️⃣ Inventory Management Connection
+3️⃣ Categories Connection
+4️⃣ Reports Connection
+5️⃣ Settings Connection
+6️⃣ Stock Management Connection
+7️⃣ Variance Connection
+8️⃣ Database Connection
+
+=====================================
+
+Formatting Instructions for Word:
+1. Use "Courier New" font for the flowchart sections
+2. Set line spacing to 1.0
+3. Use page breaks between major sections (marked by =====)
+4. Center align the main title and section headers
+5. Use bold for section headers
+6. Consider using Word's built-in shapes to enhance the visual representation of the flowchart
+7. Add page numbers at the bottom of each page 
