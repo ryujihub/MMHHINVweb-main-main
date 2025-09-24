@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Alerts collection
+    match /alerts/{alertId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null 
+        && request.resource.data.keys().hasAll(['type', 'priority', 'title', 'message'])
+        && request.resource.data.type in ['low_stock', 'expiry', 'overdue_order', 'system_health', 'user_activity']
+        && request.resource.data.priority in ['critical', 'high', 'medium', 'low'];
+      allow update: if request.auth != null 
+        && (request.auth.uid == resource.data.userId || request.auth.token.role == 'admin')
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['read', 'acknowledged', 'acknowledgedBy', 'acknowledgedAt', 'acknowledgmentNotes', 'updatedAt']);
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+    }
+    
+    // Alert rules collection
+    match /alert_rules/{ruleId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.token.role == 'admin';
+      allow update: if request.auth != null && request.auth.token.role == 'admin';
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null 
+        && (request.auth.uid == resource.data.userId || request.auth.token.role == 'admin');
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Inventory collection
+    match /inventory/{itemId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.role in ['admin', 'manager'];
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.role in ['admin', 'manager'];
+    }
+    
+    // Activities collection
+    match /activities/{activityId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.token.role == 'admin';
+    }
+  }
+}

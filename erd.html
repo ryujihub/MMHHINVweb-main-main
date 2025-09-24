@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMH Hardware Inventory System - ERD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        .erd-container {
+            position: relative;
+            width: 100%;
+            height: 800px;
+            margin-top: 30px;
+            background-color: white;
+        }
+        .entity {
+            position: absolute;
+            width: 200px;
+            border: 1px solid #000;
+            background-color: white;
+        }
+        .entity-title {
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .entity-attributes {
+            padding: 8px;
+        }
+        .attribute {
+            padding: 4px 8px;
+            font-size: 0.9em;
+        }
+        .primary-key {
+            color: #e74c3c;
+        }
+        .foreign-key {
+            color: #3498db;
+        }
+        .relationship-line {
+            position: absolute;
+            height: 1px;
+            background-color: #000;
+            transform-origin: left center;
+        }
+        .relationship-label {
+            position: absolute;
+            background-color: white;
+            padding: 0 4px;
+            font-size: 0.9em;
+        }
+        .cardinality {
+            position: absolute;
+            font-size: 0.9em;
+            background-color: white;
+            padding: 0 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MMH Hardware Inventory System - Entity Relationship Diagram</h1>
+        
+        <div class="erd-container">
+            <!-- User Entity -->
+            <div class="entity" style="top: 100px; left: 100px;">
+                <div class="entity-title">User</div>
+                <div class="entity-attributes">
+                    <div class="attribute primary-key">user_id</div>
+                    <div class="attribute">email</div>
+                    <div class="attribute">password_hash</div>
+                    <div class="attribute">name</div>
+                    <div class="attribute">role</div>
+                    <div class="attribute">created_at</div>
+                    <div class="attribute">last_login</div>
+                </div>
+            </div>
+            
+            <!-- Category Entity -->
+            <div class="entity" style="top: 100px; right: 100px;">
+                <div class="entity-title">Category</div>
+                <div class="entity-attributes">
+                    <div class="attribute primary-key">category_id</div>
+                    <div class="attribute">name</div>
+                    <div class="attribute">description</div>
+                    <div class="attribute">created_at</div>
+                    <div class="attribute">updated_at</div>
+                </div>
+            </div>
+            
+            <!-- Item Entity -->
+            <div class="entity" style="top: 350px; left: 50%; transform: translateX(-50%);">
+                <div class="entity-title">Item</div>
+                <div class="entity-attributes">
+                    <div class="attribute primary-key">item_id</div>
+                    <div class="attribute foreign-key">category_id</div>
+                    <div class="attribute">name</div>
+                    <div class="attribute">description</div>
+                    <div class="attribute">quantity</div>
+                    <div class="attribute">unit_price</div>
+                    <div class="attribute">total_value</div>
+                    <div class="attribute">created_at</div>
+                    <div class="attribute">updated_at</div>
+                </div>
+            </div>
+            
+            <!-- Stock Movement Entity -->
+            <div class="entity" style="top: 600px; left: 100px;">
+                <div class="entity-title">StockMovement</div>
+                <div class="entity-attributes">
+                    <div class="attribute primary-key">movement_id</div>
+                    <div class="attribute foreign-key">item_id</div>
+                    <div class="attribute foreign-key">user_id</div>
+                    <div class="attribute">movement_type</div>
+                    <div class="attribute">quantity</div>
+                    <div class="attribute">notes</div>
+                    <div class="attribute">timestamp</div>
+                </div>
+            </div>
+            
+            <!-- Report Entity -->
+            <div class="entity" style="top: 600px; right: 100px;">
+                <div class="entity-title">Report</div>
+                <div class="entity-attributes">
+                    <div class="attribute primary-key">report_id</div>
+                    <div class="attribute foreign-key">user_id</div>
+                    <div class="attribute">report_type</div>
+                    <div class="attribute">parameters</div>
+                    <div class="attribute">generated_at</div>
+                    <div class="attribute">file_path</div>
+                </div>
+            </div>
+            
+            <!-- Settings Entity -->
+            <div class="entity" style="top: 600px; left: 50%; transform: translateX(-50%);">
+                <div class="entity-title">Settings</div>
+                <div class="entity-attributes">
+                    <div class="attribute primary-key">setting_id</div>
+                    <div class="attribute foreign-key">user_id</div>
+                    <div class="attribute">setting_key</div>
+                    <div class="attribute">setting_value</div>
+                    <div class="attribute">updated_at</div>
+                </div>
+            </div>
+            
+            <!-- Relationships -->
+            <!-- User - Item -->
+            <div class="relationship-line" style="top: 200px; left: 200px; width: 300px; transform: rotate(45deg);"></div>
+            <div class="relationship-label" style="top: 180px; left: 300px;">manages</div>
+            <div class="cardinality" style="top: 180px; left: 200px;">1</div>
+            <div class="cardinality" style="top: 180px; left: 500px;">N</div>
+            
+            <!-- Category - Item -->
+            <div class="relationship-line" style="top: 200px; right: 200px; width: 300px; transform: rotate(-45deg);"></div>
+            <div class="relationship-label" style="top: 180px; right: 300px;">contains</div>
+            <div class="cardinality" style="top: 180px; right: 200px;">1</div>
+            <div class="cardinality" style="top: 180px; right: 500px;">N</div>
+            
+            <!-- Item - StockMovement -->
+            <div class="relationship-line" style="top: 450px; left: 50%; width: 200px; transform: translateX(-50%) rotate(90deg);"></div>
+            <div class="relationship-label" style="top: 440px; left: 50%;">has</div>
+            <div class="cardinality" style="top: 440px; left: 50%;">1</div>
+            <div class="cardinality" style="top: 640px; left: 50%;">N</div>
+            
+            <!-- User - StockMovement -->
+            <div class="relationship-line" style="top: 600px; left: 200px; width: 200px; transform: rotate(45deg);"></div>
+            <div class="relationship-label" style="top: 580px; left: 250px;">performs</div>
+            <div class="cardinality" style="top: 580px; left: 200px;">1</div>
+            <div class="cardinality" style="top: 580px; left: 400px;">N</div>
+            
+            <!-- User - Report -->
+            <div class="relationship-line" style="top: 600px; right: 200px; width: 200px; transform: rotate(-45deg);"></div>
+            <div class="relationship-label" style="top: 580px; right: 250px;">generates</div>
+            <div class="cardinality" style="top: 580px; right: 200px;">1</div>
+            <div class="cardinality" style="top: 580px; right: 400px;">N</div>
+            
+            <!-- User - Settings -->
+            <div class="relationship-line" style="top: 600px; left: 50%; width: 200px; transform: translateX(-50%) rotate(90deg);"></div>
+            <div class="relationship-label" style="top: 580px; left: 50%;">has</div>
+            <div class="cardinality" style="top: 580px; left: 50%;">1</div>
+            <div class="cardinality" style="top: 780px; left: 50%;">N</div>
+        </div>
+    </div>
+</body>
+</html> 
