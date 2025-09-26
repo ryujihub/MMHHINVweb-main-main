@@ -4,7 +4,9 @@ import Login from '../views/Login.vue';
 import ProductCatalog from '../components/ProductCatalog.vue';
 import OrderProcessing from '../components/OrderProcessing.vue';
 import OrderManagement from '../components/OrderManagement.vue';
-import Reports from '../components/Reports.vue';
+import SalesReports from '../components/SalesReports.vue';
+import InventoryReports from '../components/InventoryReports.vue';
+import GuideManual from '../components/GuideManual.vue';
 import { auth } from '../firebase/config';
 
 const routes = [
@@ -39,10 +41,22 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/reports',
-    name: 'Reports',
-    component: Reports,
+    path: '/reports/sales',
+    name: 'SalesReports',
+    component: SalesReports,
     meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/reports/inventory',
+    name: 'InventoryReports',
+    component: InventoryReports,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/guide-manual',
+    name: 'GuideManual',
+    component: GuideManual,
+    meta: { requiresAuth: true }
   },
   {
     path: '/:pathMatch(.*)*',
@@ -81,4 +95,4 @@ router.beforeEach(async (to, from, next) => {
   }
 });
 
-export default router; 
+export default router;

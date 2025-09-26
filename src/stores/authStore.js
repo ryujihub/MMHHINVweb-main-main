@@ -67,6 +67,10 @@ export const useAuthStore = defineStore('auth', () => {
     return userRoleIndex >= requiredRoleIndex
   }
 
+  const setUserRole = (role) => {
+    userRole.value = (role === 'admin' || role === 'staff') ? role : 'staff';
+  };
+
   return {
     user,
     userRole,
@@ -74,6 +78,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isStaff,
     initializeAuth,
-    canAccess
+    fetchUserRole,
+    canAccess,
+    setUserRole
   }
 })

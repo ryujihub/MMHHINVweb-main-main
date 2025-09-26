@@ -17,18 +17,40 @@
             <i class="fas fa-boxes"></i>
             Products
           </router-link>
-          <router-link to="/orders/new" class="nav-link">
-            <i class="fas fa-cart-plus"></i>
-            New Order
-          </router-link>
-          <router-link to="/orders" class="nav-link">
-            <i class="fas fa-clipboard-list"></i>
-            Orders
-          </router-link>
-          <router-link to="/reports" class="nav-link">
-            <i class="fas fa-chart-bar"></i>
-            Reports
-          </router-link>
+          <div class="nav-item has-submenu">
+            <a href="#" class="nav-link" @click.prevent="toggleOrderProcessingSubMenu">
+              <i class="fas fa-cogs"></i> <!-- Icon for Order Processing -->
+              Order Processing
+              <i class="fas fa-chevron-down submenu-arrow" :class="{ 'rotate': showOrderProcessingSubMenu }"></i>
+            </a>
+            <div v-if="showOrderProcessingSubMenu" class="submenu">
+              <router-link to="/orders/new" class="nav-link sub-link">
+                <i class="fas fa-cart-plus"></i>
+                New Order
+              </router-link>
+              <router-link to="/orders" class="nav-link sub-link">
+                <i class="fas fa-clipboard-list"></i>
+                Orders
+              </router-link>
+            </div>
+          </div>
+          <div class="nav-item has-submenu">
+            <a href="#" class="nav-link" @click.prevent="toggleReportsSubMenu">
+              <i class="fas fa-chart-bar"></i> <!-- Icon for Reports -->
+              Reports
+              <i class="fas fa-chevron-down submenu-arrow" :class="{ 'rotate': showReportsSubMenu }"></i>
+            </a>
+            <div v-if="showReportsSubMenu" class="submenu">
+              <router-link to="/reports/sales" class="nav-link sub-link">
+                <i class="fas fa-chart-line"></i>
+                Sales Report
+              </router-link>
+              <router-link to="/reports/inventory" class="nav-link sub-link">
+                <i class="fas fa-boxes"></i>
+                Inventory Report
+              </router-link>
+            </div>
+          </div>
         </div>
       </nav>
 
@@ -47,19 +69,12 @@
           </div>
           
           <div class="user-menu">
-            <button class="notifications-btn" @click="toggleNotifications">
-              <i class="fas fa-bell"></i>
-              <span v-if="unreadNotifications" class="notification-badge">
-                {{ unreadNotifications }}
-              </span>
-            </button>
-            
-            <div class="user-profile" @click.stop="toggleUserMenu">
+          <div class="user-profile" @click.stop="toggleUserMenu">
               <div class="avatar">
-                {{ user?.email ? user.email[0].toUpperCase() : 'U' }}
+                {{ username ? username[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U') }}
               </div>
               <div class="user-info">
-                <span class="user-name">{{ user?.email || 'User' }}</span>
+                <span class="user-name">{{ username || user?.email || 'User' }}</span>
                 <span class="user-role">{{ userRole || 'Guest' }}</span>
               </div>
               <i class="fas fa-chevron-down" :class="{ 'rotate': showUserMenu }"></i>
@@ -69,10 +84,10 @@
             <div v-if="showUserMenu" class="user-dropdown" :class="{ show: showUserMenu }">
           <div class="dropdown-header">
             <div class="avatar-large">
-              {{ user?.email ? user.email[0].toUpperCase() : 'U' }}
+              {{ username ? username[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U') }}
             </div>
             <div class="user-info">
-              <p class="user-email">{{ user?.email || 'Guest User' }}</p>
+              <p class="user-email">{{ username || user?.email || 'Guest User' }}</p>
               <p class="user-role">{{ userRole || 'No Role Assigned' }}</p>
             </div>
           </div>
@@ -82,10 +97,10 @@
               <i class="fas fa-user"></i>
               Profile
             </a>
-            <a href="#" class="menu-item">
-              <i class="fas fa-cog"></i>
-              Settings
-            </a>
+            <router-link to="/guide-manual" class="menu-item">
+              <i class="fas fa-book"></i>
+              Guide Manual
+            </router-link>
           </div>
           <div class="dropdown-divider"></div>
           <button @click="handleLogout" class="logout-btn">
@@ -97,24 +112,6 @@
         </header>
 
         <router-view></router-view>
-
-        <!-- Notifications Dropdown -->
-        <div v-if="showNotifications" class="notifications-dropdown" :class="{ show: showNotifications }">
-          <div v-if="notifications.length === 0" class="no-notifications">
-            No new notifications
-          </div>
-          <div v-else class="notifications-list">
-            <div v-for="notification in notifications" 
-                 :key="notification.id" 
-                 class="notification-item"
-                 :class="{ unread: !notification.read }">
-              <div class="notification-content">
-                <p class="notification-text">{{ notification.message }}</p>
-                <span class="notification-time">{{ notification.timestamp }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
   </div>
@@ -126,7 +123,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
 import { auth, db } from './firebase/config'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
-import { collection, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore' // Removed collection, query, where, onSnapshot
 import { formatDistanceToNow } from 'date-fns'
 
 export default {
@@ -136,29 +133,33 @@ export default {
     const authStore = useAuthStore()
     
     const searchQuery = ref('')
-    const unreadNotifications = ref(0)
     const username = ref('')
     const userAvatar = ref('')
     const showUserMenu = ref(false)
-    const showNotifications = ref(false)
     const showSidebar = ref(true) // New state for sidebar visibility
-    const notifications = ref([])
+    const showOrderProcessingSubMenu = ref(false) // New state for Order Processing submenu
+    const showReportsSubMenu = ref(false) // New state for Reports submenu
 
     // Use store properties with toRefs to maintain reactivity
     const { user, userRole } = toRefs(authStore)
 
     const toggleUserMenu = () => {
       showUserMenu.value = !showUserMenu.value
-      showNotifications.value = false // Close notifications when user menu is toggled
+      // Removed: showNotifications.value = false
     }
 
-    const toggleNotifications = () => {
-      showNotifications.value = !showNotifications.value
-      showUserMenu.value = false // Close user menu when notifications are toggled
-    }
+    // Removed: toggleNotifications method
 
     const toggleSidebar = () => {
       showSidebar.value = !showSidebar.value
+    }
+
+    const toggleOrderProcessingSubMenu = () => {
+      showOrderProcessingSubMenu.value = !showOrderProcessingSubMenu.value
+    }
+
+    const toggleReportsSubMenu = () => {
+      showReportsSubMenu.value = !showReportsSubMenu.value
     }
 
     const handleLogout = async () => {
@@ -181,69 +182,63 @@ export default {
       authStore.initializeAuth()
       
       // Listen for auth state changes
-      onAuthStateChanged(auth, (firebaseUser) => {
+      onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-          username.value = firebaseUser.displayName || 'User'
-          userAvatar.value = firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username.value) + '&background=random'
+          // Fetch user data from Firestore
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            username.value = userData.username || firebaseUser.displayName || 'User';
+            authStore.setUserRole(userData.role); // Use the action to update user role in store
+          } else {
+            username.value = firebaseUser.displayName || 'User';
+            authStore.setUserRole('staff'); // Default role if user doc not found
+          }
+          userAvatar.value = firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username.value) + '&background=random';
           
-          // Fetch user role and notifications
-          fetchUserData(firebaseUser.uid)
+          // Removed: Fetch notifications
         } else {
-          username.value = ''
-          userAvatar.value = ''
+          username.value = '';
+          userAvatar.value = '';
+          authStore.setUserRole('staff'); // Reset to default role
         }
-      })
+      });
 
       // Close dropdowns when clicking outside
       document.addEventListener('click', (e) => {
         const userProfile = document.querySelector('.user-profile')
-        const notificationsBtn = document.querySelector('.notifications-btn')
+        // Removed: notificationsBtn related logic
         
         if (userProfile && !userProfile.contains(e.target)) {
           showUserMenu.value = false
         }
         
-        if (notificationsBtn && !notificationsBtn.contains(e.target)) {
-          showNotifications.value = false
-        }
+        // Removed: if (notificationsBtn && !notificationsBtn.contains(e.target)) { showNotifications.value = false }
       })
     })
 
-    const fetchUserData = async (userId) => {
-      try {
-        // Listen for notifications
-        const notificationsQuery = query(
-          collection(db, 'notifications'),
-          where('userId', '==', userId),
-          where('read', '==', false)
-        )
-        
-        onSnapshot(notificationsQuery, (snapshot) => {
-          notifications.value = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-          unreadNotifications.value = notifications.value.length
-        })
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-      }
-    }
+    // Removed: fetchUserData function
 
     return {
       searchQuery,
-      unreadNotifications,
+      // Removed: unreadNotifications,
       username,
       userAvatar,
       userRole,
       user,
-      notifications,
+      // Removed: notifications,
       showUserMenu,
-      showNotifications,
+      // Removed: showNotifications,
       showSidebar,
+      showOrderProcessingSubMenu,
+      showReportsSubMenu,
       toggleUserMenu,
-      toggleNotifications,
+      // Removed: toggleNotifications,
       toggleSidebar,
+      toggleOrderProcessingSubMenu,
+      toggleReportsSubMenu,
       handleLogout,
       formatTime
     }
@@ -272,34 +267,34 @@ body {
   overflow-x: hidden;
 }
 
-.app-wrapper {
-  display: flex;
-  position: relative;
-  min-height: 100vh;
-  flex: 1; /* Ensure app-wrapper takes full width */
-}
+  .app-wrapper {
+    display: flex;
+    position: relative;
+    min-height: 100vh;
+    flex: 1;
+  }
 
-.sidebar {
-  width: 240px; /* Reduced width for more main content space */
-  min-width: 240px;
-  background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
-  color: white;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  position: sticky;
-  left: 0;
-  top: 0;
-  z-index: 100;
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
-}
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    color: white;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+  }
 
-.sidebar.hide-on-mobile {
-  transform: translateX(-100%);
-  position: absolute;
-}
+  .sidebar.sidebar-hidden {
+    transform: translateX(-100%);
+    position: absolute;
+  }
 
 .sidebar-header {
   padding-bottom: 24px;
@@ -352,6 +347,47 @@ body {
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
 
+.nav-item.has-submenu {
+  position: relative;
+}
+
+.nav-item .nav-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.submenu-arrow {
+  transition: transform 0.3s ease;
+}
+
+.submenu-arrow.rotate {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px; /* Indent sub-menu items */
+  margin-top: 5px;
+  gap: 5px;
+}
+
+.sub-link {
+  padding: 8px 16px; /* Adjust padding for sub-links */
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.05); /* Slightly different background for sub-links */
+}
+
+.sub-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sub-link.router-link-active {
+  background: #2980b9; /* Darker blue for active sub-link */
+  box-shadow: none;
+}
+
 .nav-link i {
   width: 24px;
   height: 24px;
@@ -384,16 +420,16 @@ body {
   height: 72px;
 }
 
-.menu-toggle {
-  display: none; /* Hidden by default, shown on mobile */
-  background: none;
-  border: none;
-  color: #2c3e50;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  margin-right: 15px;
-}
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #2c3e50;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 15px;
+  }
 
 .search-bar {
   position: relative;
@@ -741,53 +777,211 @@ body {
   color: #7f8c8d;
 }
 
-@media (max-width: 768px) {
-  .app-wrapper {
-    flex-direction: column;
+  /* Responsive adjustments */
+
+  /* Tablet and smaller screens */
+  @media (max-width: 1024px) {
+    .sidebar {
+      width: 200px;
+      min-width: 200px;
+      padding: 20px;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .sidebar-header .subtitle {
+      font-size: 0.8rem;
+    }
+
+    .nav-link {
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+
+    .top-bar {
+      padding: 12px 24px;
+    }
+
+    .search-bar {
+      width: 250px;
+    }
+
+    .user-menu {
+      gap: 15px;
+    }
+
+    .user-profile {
+      padding: 6px 10px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+    }
+
+    .user-name {
+      font-size: 13px;
+    }
+
+    .user-role {
+      font-size: 11px;
+    }
   }
 
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 250px;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-    z-index: 1000;
+  /* Mobile screens */
+  @media (max-width: 768px) {
+    .app-wrapper {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 250px;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+      z-index: 1000;
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.show-sidebar {
+      transform: translateX(0);
+    }
+
+    .app-wrapper.sidebar-hidden .main-content {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .menu-toggle {
+      display: block;
+    }
+
+    .top-bar {
+      padding: 10px 20px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      height: auto; /* Allow height to adjust based on content */
+    }
+
+    .search-bar {
+      order: 3; /* Move search bar below user menu on small screens */
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .user-menu {
+      order: 2;
+      margin-left: auto;
+    }
+
+    .notifications-btn {
+      order: 1;
+      margin-right: 0;
+    }
+
+    .main-content {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .content {
+      padding: 15px;
+    }
+
+    .user-dropdown,
+    .notifications-dropdown {
+      right: 10px; /* Adjust position for smaller screens */
+      left: auto;
+      min-width: unset;
+      width: calc(100% - 20px); /* Take full width minus padding */
+      max-width: 350px; /* Limit max width */
+    }
   }
 
-  .sidebar.show-sidebar {
-    transform: translateX(0);
-  }
+  /* Smaller mobile screens */
+  @media (max-width: 480px) {
+    .top-bar {
+      padding: 8px 15px;
+    }
 
-  .menu-toggle {
-    display: block;
-  }
+    .menu-toggle {
+      font-size: 20px;
+      margin-right: 10px;
+    }
 
-  .top-bar {
-    padding: 10px 20px;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 15px;
-  }
+    .search-bar input {
+      padding: 6px 30px 6px 10px;
+      font-size: 13px;
+    }
 
-  .search-bar {
-    flex-grow: 1;
-    width: auto;
-  }
+    .user-profile {
+      gap: 8px;
+      padding: 5px 8px;
+    }
 
-  .user-menu {
-    width: auto;
-    margin-left: auto;
-  }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
 
-  .notifications-btn {
-    margin-left: 0;
-  }
+    .user-name,
+    .user-role {
+      display: none; /* Hide text to save space */
+    }
 
-  .content {
-    padding: 15px;
+    .user-profile i {
+      font-size: 10px;
+    }
+
+    .notifications-btn {
+      font-size: 16px;
+      padding: 6px;
+    }
+
+    .notification-badge {
+      font-size: 10px;
+      padding: 1px 4px;
+      min-width: 16px;
+      top: -3px;
+      right: -3px;
+    }
+
+    .dropdown-header {
+      padding: 15px;
+      gap: 10px;
+    }
+
+    .avatar-large {
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+    }
+
+    .dropdown-header .user-email {
+      font-size: 14px;
+    }
+
+    .dropdown-header .user-role {
+      font-size: 12px;
+    }
+
+    .menu-item,
+    .logout-btn {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .menu-item i,
+    .logout-btn i {
+      font-size: 14px;
+    }
   }
-}
 </style>

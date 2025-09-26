@@ -27,7 +27,7 @@ export const useInventoryStore = defineStore('inventory', () => {
   const topSellingItems = ref([])
   const notifications = ref([])
   const loading = ref(false)
-  const categories = ref(['cement', 'lumber', 'tools', 'paint', 'electrical', 'plumbing'])
+  const categories = ref([]) // Initialize as empty, will be populated from DB
 
   // Constants
   const LOW_STOCK_THRESHOLD = 10
@@ -50,6 +50,7 @@ export const useInventoryStore = defineStore('inventory', () => {
         ...doc.data()
       }))
       updateStockAlerts()
+      fetchCategories() // Fetch categories after inventory is loaded
     })
 
     // Listen for new orders
@@ -315,7 +316,25 @@ export const useInventoryStore = defineStore('inventory', () => {
       console.error('Error fetching inventory breakdown:', error);
       throw error;
     }
-  };
+  }
+
+  // Fetch unique categories from inventory
+  const fetchCategories = async () => {
+    try {
+      const q = query(collection(db, 'inventory'))
+      const snapshot = await getDocs(q)
+      const uniqueCategories = new Set()
+      snapshot.docs.forEach(doc => {
+        const data = doc.data()
+        if (data.category) {
+          uniqueCategories.add(data.category)
+        }
+      })
+      categories.value = Array.from(uniqueCategories)
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+    }
+  }
 
   return {
     inventory,

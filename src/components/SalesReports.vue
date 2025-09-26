@@ -1,7 +1,7 @@
 <template>
-  <div class="reports">
+  <div class="sales-reports">
     <div class="page-header">
-      <h1>Reports</h1>
+      <h1>Sales Report</h1>
       <div class="header-actions">
         <div class="date-range">
           <Datepicker 
@@ -16,10 +16,6 @@
           </select>
         </div>
         <div class="export-actions">
-          <button @click="exportToCsv" class="export-btn">
-            <i class="fas fa-file-csv"></i>
-            Export CSV
-          </button>
           <button @click="exportToPdf" class="export-btn">
             <i class="fas fa-file-pdf"></i>
             Export PDF
@@ -85,36 +81,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Stock Movement -->
-      <div class="report-card">
-        <div class="card-header">
-          <h2>Stock Movement</h2>
-          <select v-model="stockMovementCategory">
-            <option value="">All Categories</option>
-            <option v-for="category in categories" :key="category">
-              {{ category }}
-            </option>
-          </select>
-        </div>
-        <div class="card-content">
-          <canvas ref="stockMovementChart"></canvas>
-          <div class="movement-summary">
-            <div class="summary-item">
-              <span class="label">Total Items Sold</span>
-              <span class="value">{{ totalItemsSold }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="label">Low Stock Items</span>
-              <span class="value warning">{{ lowStockCount }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="label">Stock Value</span>
-              <span class="value">₱{{ formatPrice(totalStockValue) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -143,21 +109,16 @@ const inventoryStore = useInventoryStore()
 const dateRange = ref([new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), new Date()])
 const reportPeriod = ref('daily')
 const topProductsLimit = ref(5)
-const stockMovementCategory = ref('')
 const ordersChart = ref(null)
-const stockMovementChart = ref(null)
 
 // Chart instances
 let ordersChartInstance = null
-let stockChartInstance = null
 
 // Computed
 const formatDateRange = computed(() => {
   if (!dateRange.value[0] || !dateRange.value[1]) return ''
   return `${format(dateRange.value[0], 'MMM d, yyyy')} - ${format(dateRange.value[1], 'MMM d, yyyy')}`
 })
-
-const categories = computed(() => inventoryStore.categories)
 
 const filteredOrders = computed(() => {
   const start = startOfDay(dateRange.value[0])
@@ -224,7 +185,7 @@ const totalRevenue = computed(() => {
 })
 
 const averageOrderValue = computed(() => {
-  return totalOrders.value ? totalRevenue.value / totalRevenue.value : 0
+  return totalOrders.value ? totalRevenue.value / totalOrders.value : 0
 })
 
 const topProducts = computed(() => {
@@ -250,23 +211,6 @@ const topProducts = computed(() => {
   return Array.from(products.values())
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, topProductsLimit.value)
-})
-
-const totalItemsSold = computed(() => {
-  return filteredOrders.value.reduce((sum, order) => {
-    return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0)
-  }, 0)
-})
-
-const lowStockCount = computed(() => inventoryStore.getLowStockCount)
-
-const totalStockValue = computed(() => {
-  return inventoryStore.inventory.reduce((sum, item) => {
-    if (!stockMovementCategory.value || item.category === stockMovementCategory.value) {
-      return sum + (item.price * item.currentStock)
-    }
-    return sum
-  }, 0)
 })
 
 // Methods
@@ -314,108 +258,16 @@ const updateOrdersChart = () => {
   })
 }
 
-const updateStockMovementChart = () => {
-  if (stockChartInstance) {
-    stockChartInstance.destroy()
-  }
-
-  const ctx = stockMovementChart.value.getContext('2d')
-  const inventory = inventoryStore.inventory.filter(item => 
-    !stockMovementCategory.value || item.category === stockMovementCategory.value
-  )
-
-  const data = inventory.map(item => ({
-    x: item.name,
-    sold: item.totalSold || 0,
-    stock: item.currentStock
-  }))
-
-  stockChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: data.map(d => d.x),
-      datasets: [
-        {
-          label: 'Current Stock',
-          data: data.map(d => d.stock),
-          backgroundColor: '#dbeafe',
-          borderColor: '#2563eb'
-        },
-        {
-          label: 'Sold',
-          data: data.map(d => d.sold),
-          backgroundColor: '#fee2e2',
-          borderColor: '#ef4444'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          stacked: false
-        },
-        x: {
-          stacked: false
-        }
-      }
-    }
-  })
-}
-
-const exportToCsv = () => {
-  // Generate CSV content
-  const rows = [
-    ['Report Period', formatDateRange.value],
-    ['Total Orders', totalOrders.value],
-    ['Total Revenue', `₱${formatPrice(totalRevenue.value)}`],
-    ['Average Order Value', `₱${formatPrice(averageOrderValue.value)}`],
-    [],
-    ['Best Selling Products'],
-    ['Product Name', 'Category', 'Quantity Sold', 'Revenue'],
-    ...topProducts.value.map(product => [
-      product.name,
-      product.category,
-      product.quantitySold,
-      `₱${formatPrice(product.revenue)}`
-    ]),
-    [],
-    ['Stock Movement'],
-    ['Product Name', 'Category', 'Current Stock', 'Total Sold'],
-    ...inventoryStore.inventory
-      .filter(item => !stockMovementCategory.value || item.category === stockMovementCategory.value)
-      .map(item => [
-        item.name,
-        item.category,
-        item.currentStock,
-        item.totalSold || 0
-      ])
-  ]
-
-  const csvContent = rows
-    .map(row => row.join(','))
-    .join('\n')
-
-  // Create and download file
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `report_${format(new Date(), 'yyyy-MM-dd')}.csv`
-  link.click()
-}
 
 const exportToPdf = () => {
   const doc = new jsPDF()
   
-  // Title
   doc.setFontSize(20)
-  doc.text('Sales and Inventory Report', 20, 20)
+  doc.text('Sales Report', 20, 20)
   
   doc.setFontSize(12)
   doc.text(`Period: ${formatDateRange.value}`, 20, 30)
 
-  // Summary
   doc.setFontSize(16)
   doc.text('Summary', 20, 45)
   
@@ -426,7 +278,6 @@ const exportToPdf = () => {
     `Average Order Value: ₱${formatPrice(averageOrderValue.value)}`
   ], 20, 55)
 
-  // Best Selling Products
   doc.setFontSize(16)
   doc.text('Best Selling Products', 20, 85)
 
@@ -441,26 +292,7 @@ const exportToPdf = () => {
     ])
   })
 
-  // Stock Movement
-  doc.addPage()
-  doc.setFontSize(16)
-  doc.text('Stock Movement', 20, 20)
-
-  autoTable(doc, {
-    startY: 25,
-    head: [['Product', 'Category', 'Current Stock', 'Total Sold']],
-    body: inventoryStore.inventory
-      .filter(item => !stockMovementCategory.value || item.category === stockMovementCategory.value)
-      .map(item => [
-        item.name,
-        item.category,
-        item.currentStock,
-        item.totalSold || 0
-      ])
-  })
-
-  // Save PDF
-  doc.save(`report_${format(new Date(), 'yyyy-MM-dd')}.pdf`)
+  doc.save(`sales_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`)
 }
 
 // Watchers
@@ -468,19 +300,15 @@ watch([dateRange, reportPeriod], () => {
   updateOrdersChart()
 })
 
-watch([stockMovementCategory], () => {
-  updateStockMovementChart()
-})
-
 // Lifecycle
 onMounted(() => {
   updateOrdersChart()
-  updateStockMovementChart()
 })
 </script>
 
 <style scoped>
-.reports {
+/* Re-using styles from Reports.vue, adjust as needed */
+.sales-reports {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
@@ -613,35 +441,6 @@ onMounted(() => {
   gap: 2rem;
 }
 
-.movement-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.summary-item .label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.summary-item .value {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.summary-item .value.warning {
-  color: #ef4444;
-}
-
 select {
   padding: 0.5rem;
   border: 1px solid #e5e7eb;
@@ -652,7 +451,7 @@ select {
 }
 
 @media (max-width: 768px) {
-  .reports {
+  .sales-reports {
     padding: 1rem;
   }
 
