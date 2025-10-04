@@ -1,0 +1,181 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0" version="28.2.5">
+  <diagram id="MMH-ERD" name="MMH ERD (Chen)">
+    <mxGraphModel dx="1098" dy="584" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1080" pageHeight="1920" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="entUsers" value="USERS" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="140" y="120" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="entCustomers" value="CUSTOMERS" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=0;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="380" y="120" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="entOrders" value="ORDERS" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="450" y="305" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="entOrderItems" value="ORDER_ITEMS" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=0;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="440" y="580" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="entInventory" value="PRODUCTS" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="450" y="810" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="entStockMoves" value="STOCK_MOVEMENTS" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=0;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="420" y="1010" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="relPlaces" value="places" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="400" y="200" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="relCreatedBy" value="created_by" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="150" y="300" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="relHasItems" value="has" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="470" y="460" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="relIncludes" value="includes" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="465" y="700" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="relMoves" value="moves" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="470" y="910" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="attrUid" value="uid" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry x="80" y="70" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrRole" value="role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry x="40" y="200" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrDept" value="department" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry y="130" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrCustId" value="id" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="400" y="60" width="70" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrCustName" value="name" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="560" y="60" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrCustContact" value="phone,email" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="600" y="140" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrOrderId" value="id" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="600" y="250" width="70" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrStatus" value="status" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="320" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrCreatedAt" value="createdAt" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="330" y="380" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrProdId" value="id" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="150" y="790" width="70" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrProdName" value="name" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="740" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrSKU" value="sku" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="270" y="900" width="70" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrPrice" value="price" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="690" y="800" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrStock" value="stockQty" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="230" y="760" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrQty" value="quantity" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="590" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrUnitPrice" value="unitPrice" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="310" y="590" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrMoveType" value="type" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="430" y="1110" width="70" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="attrMoveQty" value="quantity" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="510" y="1230" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e_uid_users" style="endArrow=none;rounded=0;" parent="1" source="attrUid" target="entUsers" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_role_users" style="endArrow=none;rounded=0;" parent="1" source="attrRole" target="entUsers" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dept_users" style="endArrow=none;rounded=0;" parent="1" source="attrDept" target="entUsers" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cid_customers" style="endArrow=none;rounded=0;" parent="1" source="attrCustId" target="entCustomers" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cname_customers" style="endArrow=none;rounded=0;" parent="1" source="attrCustName" target="entCustomers" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ccontact_customers" style="endArrow=none;rounded=0;" parent="1" source="attrCustContact" target="entCustomers" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_oid_orders" style="endArrow=none;rounded=0;" parent="1" source="attrOrderId" target="entOrders" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_status_orders" style="endArrow=none;rounded=0;" parent="1" source="attrStatus" target="entOrders" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_created_orders" style="endArrow=none;rounded=0;" parent="1" source="attrCreatedAt" target="entOrders" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pid_products" style="endArrow=none;rounded=0;" parent="1" source="attrProdId" target="entInventory" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pname_products" style="endArrow=none;rounded=0;" parent="1" source="attrProdName" target="entInventory" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sku_products" style="endArrow=none;rounded=0;" parent="1" source="attrSKU" target="entInventory" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_price_products" style="endArrow=none;rounded=0;" parent="1" source="attrPrice" target="entInventory" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stock_products" style="endArrow=none;rounded=0;" parent="1" source="attrStock" target="entInventory" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_qty_items" style="endArrow=none;rounded=0;" parent="1" source="attrQty" target="entOrderItems" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_unitprice_items" style="endArrow=none;rounded=0;" parent="1" source="attrUnitPrice" target="entOrderItems" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_type_moves" style="endArrow=none;rounded=0;" parent="1" source="attrMoveType" target="entStockMoves" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_qty_moves" style="endArrow=none;rounded=0;" parent="1" source="attrMoveQty" target="entStockMoves" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cust_places" value="1..N (Customer 1..N Orders)" style="endArrow=none;rounded=0;" parent="1" source="entCustomers" target="relPlaces" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_places_orders" value="0..N (Order belongs to Customer)" style="endArrow=none;rounded=0;" parent="1" source="relPlaces" target="entOrders" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_user_createdby" value="1..N (User creates Orders)" style="endArrow=none;rounded=0;dashed=1;" parent="1" source="entUsers" target="relCreatedBy" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_createdby_orders" value="1..N (Order created by 1 User)" style="endArrow=none;rounded=0;dashed=1;" parent="1" source="relCreatedBy" target="entOrders" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_orders_hasitems" value="1..N (Order has items)" style="endArrow=none;rounded=0;" parent="1" source="entOrders" target="relHasItems" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hasitems_item" value="1..N (Item belongs to 1 Order)" style="endArrow=none;rounded=0;" parent="1" source="relHasItems" target="entOrderItems" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_item_includes_product" value="N..1 (Item references Product)" style="endArrow=none;rounded=0;" parent="1" source="entOrderItems" target="relIncludes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_includes_product" value="1..N (Product in many Items)" style="endArrow=none;rounded=0;" parent="1" source="relIncludes" target="entInventory" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_product_moves" value="1..N (Product generates Stock Movements)" style="endArrow=none;rounded=0;" parent="1" source="entInventory" target="relMoves" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_moves_stock" value="1..N (Movement for 1 Product)" style="endArrow=none;rounded=0;" parent="1" source="relMoves" target="entStockMoves" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
