@@ -55,14 +55,7 @@
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { auth, db } from '../firebase/config'
-import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore'
-import { 
-  signInWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup,
-  createUserWithEmailAndPassword
-} from 'firebase/auth'
+import { auth, db } from '../supabase/supabaseClient'
 
 export default {
   setup() {

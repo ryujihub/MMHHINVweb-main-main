@@ -7,7 +7,7 @@ import OrderManagement from '../components/OrderManagement.vue';
 import SalesReports from '../components/SalesReports.vue';
 import InventoryReports from '../components/InventoryReports.vue';
 import GuideManual from '../components/GuideManual.vue';
-import { auth } from '../firebase/config';
+import { auth } from '../supabase/supabaseClient';
 
 const routes = [
   {

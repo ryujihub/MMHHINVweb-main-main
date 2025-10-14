@@ -1,5 +1,5 @@
 import { collection, addDoc, query, where, onSnapshot, orderBy, limit, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from './config';
+import { db } from '../supabase/supabaseClient';
 
 // Alert types
 export const ALERT_TYPES = {

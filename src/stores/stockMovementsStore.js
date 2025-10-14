@@ -1,15 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { db } from '../firebase/config'
-import { 
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-  orderBy
-} from 'firebase/firestore'
+import { db } from '../supabase/supabaseClient'
 
 export const useStockMovementsStore = defineStore('stockMovements', () => {
   const stockMovements = ref([])
@@ -18,15 +9,16 @@ export const useStockMovementsStore = defineStore('stockMovements', () => {
   // Record a new stock movement
   const recordStockMovement = async ({ productId, orderId, quantity, type, remainingStock, notes = '' }) => {
     try {
-      await addDoc(collection(db, 'stockMovements'), {
+      const { error } = await db.from('stockMovements').insert({
         productId,
         orderId,
         quantity,
         type,
         remainingStock,
         notes,
-        timestamp: serverTimestamp()
-      })
+        timestamp: new Date().toISOString()
+      });
+      if (error) throw error;
     } catch (error) {
       console.error('Error recording stock movement:', error)
       throw error
@@ -36,17 +28,13 @@ export const useStockMovementsStore = defineStore('stockMovements', () => {
   // Get reserved stock quantity for a product from pending orders
   const getReservedStock = async (productId) => {
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('status', '==', 'pending'),
-        where('processed', '==', false)
-      )
-      
-      const snapshot = await getDocs(q)
-      const pendingOrders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      const { data: pendingOrders, error } = await db
+        .from('orders')
+        .select('*')
+        .eq('status', 'pending')
+        .eq('processed', false);
+
+      if (error) throw error;
 
       // Sum up reserved quantities from pending orders
       return pendingOrders.reduce((total, order) => {
@@ -63,17 +51,14 @@ export const useStockMovementsStore = defineStore('stockMovements', () => {
   const getProductMovements = async (productId) => {
     try {
       loading.value = true
-      const q = query(
-        collection(db, 'stockMovements'),
-        where('productId', '==', productId),
-        orderBy('timestamp', 'desc')
-      )
-      
-      const snapshot = await getDocs(q)
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      const { data: movements, error } = await db
+        .from('stockMovements')
+        .select('*')
+        .eq('productId', productId)
+        .order('timestamp', { ascending: false });
+
+      if (error) throw error;
+      return movements;
     } catch (error) {
       console.error('Error fetching product movements:', error)
       return []

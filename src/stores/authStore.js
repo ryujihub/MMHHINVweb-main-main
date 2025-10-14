@@ -2,9 +2,7 @@
 // Staff Portal Auth Store
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { auth, db } from '../firebase/config'
-import { doc, getDoc } from 'firebase/firestore'
-import { onAuthStateChanged } from 'firebase/auth'
+import { auth, db } from '../supabase/supabaseClient'
 
 export const useAuthStore = defineStore('auth', () => {
 
@@ -20,13 +18,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Initialize authentication and fetch user role
   const initializeAuth = () => {
-    onAuthStateChanged(auth, async (firebaseUser) => {
+    auth.onAuthStateChange(async (event, session) => {
       loading.value = true
       try {
-        if (firebaseUser) {
-          user.value = firebaseUser
-          console.log('Auth state changed: User logged in', firebaseUser.email);
-          await fetchUserRole(firebaseUser.uid);
+        if (session) {
+          user.value = session.user
+          console.log('Auth state changed: User logged in', session.user.email);
+          await fetchUserRole(session.user.id);
         } else {
           user.value = null
           userRole.value = 'staff' // Default to staff if not logged in
@@ -35,17 +33,18 @@ export const useAuthStore = defineStore('auth', () => {
       } finally {
         loading.value = false
       }
-      loading.value = false
     })
   }
 
 
-  // Fetch user role from Firestore ('admin' or 'staff')
+  // Fetch user role from Supabase ('admin' or 'staff')
   const fetchUserRole = async (uid) => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid))
-      if (userDoc.exists()) {
-        const role = userDoc.data().role
+      const { data, error } = await db.from('users').select('role').eq('id', uid).single();
+      if (error) throw error;
+
+      if (data) {
+        const role = data.role
         userRole.value = (role === 'admin' || role === 'staff') ? role : 'staff'
         console.log('User role fetched:', userRole.value);
       } else {

@@ -1,22 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { db } from '../firebase/config'
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs,
-  getDoc,
-  onSnapshot,
-  addDoc, 
-  updateDoc, 
-  doc, 
-  serverTimestamp,
-  orderBy,
-  limit,
-  writeBatch,
-  increment
-} from 'firebase/firestore'
+import { db } from '../supabase/supabaseClient'
 import { startOfDay, endOfDay } from 'date-fns'
 
 export const useInventoryStore = defineStore('inventory', () => {
@@ -42,28 +26,41 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   // Initialize inventory and notifications
   const initializeInventoryListener = () => {
-    const inventoryQuery = query(collection(db, 'inventory'))
-    
-    onSnapshot(inventoryQuery, (snapshot) => {
-      inventory.value = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      updateStockAlerts()
-      fetchCategories() // Fetch categories after inventory is loaded
-    })
+    db.from('inventory')
+      .on('*', payload => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const updatedItem = { id: payload.new.id, ...payload.new };
+          const index = inventory.value.findIndex(item => item.id === updatedItem.id);
+          if (index !== -1) {
+            inventory.value[index] = updatedItem;
+          } else {
+            inventory.value.push(updatedItem);
+          }
+        } else if (payload.eventType === 'DELETE') {
+          inventory.value = inventory.value.filter(item => item.id !== payload.old.id);
+        }
+        updateStockAlerts();
+        fetchCategories();
+      })
+      .subscribe();
 
     // Listen for new orders
-    const ordersQuery = query(
-      collection(db, 'orders'),
-      orderBy('createdAt', 'desc'),
-      limit(100)
-    )
-    onSnapshot(ordersQuery, (snapshot) => {
-      console.log("Fetched orders:", snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      dailyOrders.value = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-    })
+    db.from('orders')
+      .on('*', payload => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const updatedOrder = { id: payload.new.id, ...payload.new };
+          const index = dailyOrders.value.findIndex(order => order.id === updatedOrder.id);
+          if (index !== -1) {
+            dailyOrders.value[index] = updatedOrder;
+          } else {
+            dailyOrders.value.unshift(updatedOrder); // Add new orders to the beginning
+          }
+        } else if (payload.eventType === 'DELETE') {
+          dailyOrders.value = dailyOrders.value.filter(order => order.id !== payload.old.id);
+        }
+        console.log("Fetched orders:", dailyOrders.value.map(order => ({ id: order.id, ...order })));
+      })
+      .subscribe();
   }
 
   // Handle low stock items
@@ -96,17 +93,14 @@ export const useInventoryStore = defineStore('inventory', () => {
       loading.value = true
       const start = timeRange === 'week' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : startOfDay(new Date())
       
-      const q = query(
-        collection(db, 'orders'),
-        where('createdAt', '>=', start),
-        orderBy('createdAt', 'desc')
-      )
-      
-      const snapshot = await getDocs(q)
-      const orders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      const { data: orders, error } = await db
+        .from('orders')
+        .select('*')
+        .gte('createdAt', start.toISOString())
+        .order('createdAt', { ascending: false })
+        .limit(100); // Assuming a limit similar to the initial listener
+
+      if (error) throw error;
 
       // Calculate most ordered items
       const itemCounts = {}
@@ -154,13 +148,14 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   const createStockAlert = async (productId, type, message) => {
     try {
-      await addDoc(collection(db, 'alerts'), {
+      const { error } = await db.from('alerts').insert({
         productId,
         type,
         message,
-        createdAt: serverTimestamp(),
+        createdAt: new Date().toISOString(),
         isRead: false
-      })
+      });
+      if (error) throw error;
     } catch (error) {
       console.error('Error creating stock alert:', error)
     }
@@ -175,52 +170,43 @@ export const useInventoryStore = defineStore('inventory', () => {
 
     // If orderId provided, we'll check below whether it's already processed
 
-    const batch = writeBatch(db)
-    // Collect low stock alerts to create after commit
     const lowStockAlerts = []
     try {
       // If orderId provided, attempt to read order and short-circuit if processed
       if (orderId) {
-        const orderRef = doc(db, 'orders', orderId)
-        const orderSnapshot = await getDoc(orderRef)
-        if (orderSnapshot && typeof orderSnapshot.exists === 'function' && orderSnapshot.exists()) {
-          const data = orderSnapshot.data()
-          if (data && data.processed) {
-            // Already processed — nothing to do
-            return
-          }
+        const { data: existingOrder, error: fetchError } = await db.from('orders').select('processed').eq('id', orderId).single();
+        if (fetchError && fetchError.code !== 'PGRST116') throw fetchError; // PGRST116 means no rows found
+        if (existingOrder && existingOrder.processed) {
+          // Already processed — nothing to do
+          return;
         }
       }
 
       // Process each item in the order
       for (const item of orderItems) {
-        const productRef = doc(db, 'inventory', item.id)
-        const product = inventory.value.find(p => p.id === item.id)
+        const product = inventory.value.find(p => p.id === item.id);
         if (!product || product.currentStock < item.quantity) {
-          throw new Error(`Insufficient stock for ${item.name}`)
+          throw new Error(`Insufficient stock for ${item.name}`);
         }
-        // Update stock
-        batch.update(productRef, {
-          currentStock: increment(-item.quantity),
-          lastUpdated: serverTimestamp()
-        })
-        // Collect low stock alerts to create after commit
-        const newStock = product.currentStock - item.quantity
+
+        const newStock = product.currentStock - item.quantity;
+        const { error: updateError } = await db.from('inventory')
+          .update({ currentStock: newStock, lastUpdated: new Date().toISOString() })
+          .eq('id', item.id);
+        if (updateError) throw updateError;
+
         if (newStock <= LOW_STOCK_THRESHOLD) {
-          lowStockAlerts.push({ id: item.id, name: item.name, newStock })
+          lowStockAlerts.push({ id: item.id, name: item.name, newStock });
         }
       }
 
-      // Mark order processed in the same batch if orderId supplied
+      // Mark order processed if orderId supplied
       if (orderId) {
-        const orderRef = doc(db, 'orders', orderId)
-        batch.update(orderRef, {
-          processed: true,
-          processedAt: serverTimestamp()
-        })
+        const { error: updateOrderError } = await db.from('orders')
+          .update({ processed: true, processedAt: new Date().toISOString() })
+          .eq('id', orderId);
+        if (updateOrderError) throw updateOrderError;
       }
-
-      await batch.commit()
 
       // Create low stock alerts after commit for atomicity
       for (const alert of lowStockAlerts) {
@@ -238,22 +224,19 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   const getSalesByPeriod = async (startDate, endDate) => {
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('createdAt', '>=', startDate),
-        where('createdAt', '<=', endDate),
-        orderBy('createdAt', 'asc')
-      );
-      const snapshot = await getDocs(q);
-      const orders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const { data: orders, error } = await db
+        .from('orders')
+        .select('*')
+        .gte('createdAt', startDate.toISOString())
+        .lte('createdAt', endDate.toISOString())
+        .order('createdAt', { ascending: true });
 
-    console.log("Fetching sales data from:", startDate, "to:", endDate);
-    const salesByDate = {};
+      if (error) throw error;
+
+      console.log("Fetching sales data from:", startDate, "to:", endDate);
+      const salesByDate = {};
       orders.forEach(order => {
-        const orderDate = order.createdAt.toDate().toLocaleDateString('en-US'); // Assuming createdAt is a Firestore Timestamp
+        const orderDate = new Date(order.createdAt).toLocaleDateString('en-US');
         if (!salesByDate[orderDate]) {
           salesByDate[orderDate] = 0;
         }
@@ -289,13 +272,8 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   const getInventoryBreakdown = async () => {
     try {
-      // Assuming 'inventory' collection has a 'category' field
-      const q = query(collection(db, 'inventory'));
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const { data: items, error } = await db.from('inventory').select('*');
+      if (error) throw error;
 
       const breakdownMap = {};
       categories.value.forEach(category => {
@@ -321,18 +299,18 @@ export const useInventoryStore = defineStore('inventory', () => {
   // Fetch unique categories from inventory
   const fetchCategories = async () => {
     try {
-      const q = query(collection(db, 'inventory'))
-      const snapshot = await getDocs(q)
-      const uniqueCategories = new Set()
-      snapshot.docs.forEach(doc => {
-        const data = doc.data()
-        if (data.category) {
-          uniqueCategories.add(data.category)
+      const { data, error } = await db.from('inventory').select('category');
+      if (error) throw error;
+
+      const uniqueCategories = new Set();
+      data.forEach(item => {
+        if (item.category) {
+          uniqueCategories.add(item.category);
         }
-      })
-      categories.value = Array.from(uniqueCategories)
+      });
+      categories.value = Array.from(uniqueCategories);
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      console.error('Error fetching categories:', error);
     }
   }
 

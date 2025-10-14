@@ -1,19 +1,12 @@
-import { db } from '../firebase/config'
-import { 
-  collection, 
-  addDoc,
-  serverTimestamp,
-  query,
-  where,
-  getDocs
-} from 'firebase/firestore'
+import { db } from '../supabase/supabaseClient'
 
 export const createStockMovement = async (data) => {
   try {
-    await addDoc(collection(db, 'stockMovements'), {
+    const { error } = await db.from('stockMovements').insert({
       ...data,
-      timestamp: serverTimestamp()
-    })
+      timestamp: new Date().toISOString()
+    });
+    if (error) throw error;
   } catch (error) {
     console.error('Error creating stock movement:', error)
     throw error
@@ -21,17 +14,13 @@ export const createStockMovement = async (data) => {
 }
 
 export const getPendingStockReservations = async (productId) => {
-  const q = query(
-    collection(db, 'orders'),
-    where('status', '==', 'pending'),
-    where('processed', '==', false)
-  )
-  
-  const snapshot = await getDocs(q)
-  const pendingOrders = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }))
+  const { data: pendingOrders, error } = await db
+    .from('orders')
+    .select('*')
+    .eq('status', 'pending')
+    .eq('processed', false);
+
+  if (error) throw error;
 
   // Calculate total reserved quantity for the product
   let reservedQuantity = 0
