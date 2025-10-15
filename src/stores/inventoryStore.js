@@ -30,7 +30,7 @@ export const useInventoryStore = defineStore('inventory', () => {
   const categories = ref([]) // Initialize as empty, will be populated from DB
 
   // Constants
-  const LOW_STOCK_THRESHOLD = 10
+  // LOW_STOCK_THRESHOLD removed as requested
 
   // Computed properties
   const totalProducts = computed(() => inventory.value.length)
@@ -75,19 +75,10 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   // Update stock alerts and notifications
   const updateStockAlerts = () => {
-    lowStockItems.value = inventory.value.filter(item => 
-      item.currentStock > 0 && item.currentStock <= LOW_STOCK_THRESHOLD
-    )
-    
-    // Create notifications for low stock items
-    lowStockItems.value.forEach(item => {
-      addNotification({
-        type: 'low_stock',
-        title: 'Low Stock Alert',
-        message: `${item.name} - only ${item.currentStock} left in stock`,
-        severity: 'warning'
-      })
-    })
+    // Removed threshold-based filtering as requested
+    lowStockItems.value = []
+
+    // No notifications will be created since lowStockItems is empty
   }
 
   // Fetch top selling items
@@ -176,8 +167,6 @@ export const useInventoryStore = defineStore('inventory', () => {
     // If orderId provided, we'll check below whether it's already processed
 
     const batch = writeBatch(db)
-    // Collect low stock alerts to create after commit
-    const lowStockAlerts = []
     try {
       // If orderId provided, attempt to read order and short-circuit if processed
       if (orderId) {
@@ -204,11 +193,7 @@ export const useInventoryStore = defineStore('inventory', () => {
           currentStock: increment(-item.quantity),
           lastUpdated: serverTimestamp()
         })
-        // Collect low stock alerts to create after commit
-        const newStock = product.currentStock - item.quantity
-        if (newStock <= LOW_STOCK_THRESHOLD) {
-          lowStockAlerts.push({ id: item.id, name: item.name, newStock })
-        }
+        // Low stock alerts removed as requested
       }
 
       // Mark order processed in the same batch if orderId supplied
@@ -221,15 +206,6 @@ export const useInventoryStore = defineStore('inventory', () => {
       }
 
       await batch.commit()
-
-      // Create low stock alerts after commit for atomicity
-      for (const alert of lowStockAlerts) {
-        try {
-          await createStockAlert(alert.id, 'low_stock', `${alert.name} is running low (${alert.newStock} remaining)`)
-        } catch (e) {
-          console.error('Error creating stock alert during processing:', e)
-        }
-      }
     } catch (error) {
       console.error('Error processing order:', error)
       throw error

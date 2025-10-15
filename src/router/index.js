@@ -8,6 +8,7 @@ import SalesReports from '../components/SalesReports.vue';
 import InventoryReports from '../components/InventoryReports.vue';
 import GuideManual from '../components/GuideManual.vue';
 import { auth } from '../firebase/config';
+import { useAuthStore } from '../stores/authStore';
 
 const routes = [
   {
@@ -83,13 +84,24 @@ router.beforeEach(async (to, from, next) => {
   if (!isAuthReady) {
     await waitForAuth;
   }
+
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
   const isAuthenticated = auth.currentUser;
 
   if (requiresAuth && !isAuthenticated) {
     next('/login');
   } else if (to.path === '/login' && isAuthenticated) {
     next('/');
+  } else if (requiresAdmin && isAuthenticated) {
+    // Check if user is admin for admin-only routes
+    const authStore = useAuthStore();
+    if (!authStore.isAdmin) {
+      // Redirect staff users trying to access admin routes
+      next('/');
+      return;
+    }
+    next();
   } else {
     next();
   }
