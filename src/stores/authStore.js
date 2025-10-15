@@ -7,9 +7,11 @@ import { auth, db } from '../supabase/supabaseClient'
 export const useAuthStore = defineStore('auth', () => {
 
   const user = ref(null)
+  const isAuthenticated = computed(() => !!user.value); // New reactive isAuthenticated state
   // Only 'admin' and 'staff' roles for staff portal
   const userRole = ref('staff') // Default role for staff portal
   const loading = ref(true)
+  let authListener = null // Store listener reference to prevent duplicates
 
 
   const isAdmin = computed(() => userRole.value === 'admin')
@@ -18,7 +20,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Initialize authentication and fetch user role
   const initializeAuth = () => {
-    auth.onAuthStateChange(async (event, session) => {
+    // Prevent multiple listeners
+    if (authListener) {
+      console.log('Auth listener already initialized, skipping...');
+      return;
+    }
+
+    console.log('Initializing auth listener...');
+    authListener = auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change event:', event, 'Session exists:', !!session);
       loading.value = true
       try {
         if (session) {
@@ -70,8 +80,35 @@ export const useAuthStore = defineStore('auth', () => {
     userRole.value = (role === 'admin' || role === 'staff') ? role : 'staff';
   };
 
+  // Logout function
+  const logout = async () => {
+    try {
+      loading.value = true;
+      console.log('Attempting to logout user...');
+
+      // Sign out from Supabase
+      const { error } = await auth.signOut();
+      if (error) {
+        console.error('Error during logout:', error);
+        throw error;
+      }
+
+      // Clear local state
+      user.value = null;
+      userRole.value = 'staff';
+
+      console.log('User logged out successfully');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     user,
+    isAuthenticated, // Expose isAuthenticated
     userRole,
     loading,
     isAdmin,
@@ -79,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     fetchUserRole,
     canAccess,
-    setUserRole
+    setUserRole,
+    logout
   }
 })

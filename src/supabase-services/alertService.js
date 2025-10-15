@@ -1,4 +1,3 @@
-import { collection, addDoc, query, where, onSnapshot, orderBy, limit, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../supabase/supabaseClient';
 
 // Alert types
@@ -27,14 +26,15 @@ export const createAlert = async (alertData) => {
   try {
     const alert = {
       ...alertData,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       read: false,
       acknowledged: false
     };
-    
-    const docRef = await addDoc(collection(db, 'alerts'), alert);
-    return docRef.id;
+
+    const { data, error } = await db.from('alerts').insert(alert).select().single();
+    if (error) throw error;
+    return data.id;
   } catch (error) {
     console.error('Error creating alert:', error);
     throw error;
@@ -48,47 +48,88 @@ export const createAlert = async (alertData) => {
  * @returns {Function} - Unsubscribe function
  */
 export const getRealTimeAlerts = (filters = {}, callback) => {
-  let q = collection(db, 'alerts');
-  
+  // Build Supabase query
+  let query = db.from('alerts').select('*');
+
   // Apply filters
-  const conditions = [];
-  
   if (filters.type) {
-    conditions.push(where('type', '==', filters.type));
+    query = query.eq('type', filters.type);
   }
-  
+
   if (filters.priority) {
-    conditions.push(where('priority', '==', filters.priority));
+    query = query.eq('priority', filters.priority);
   }
-  
+
   if (filters.read !== undefined) {
-    conditions.push(where('read', '==', filters.read));
+    query = query.eq('read', filters.read);
   }
-  
+
   if (filters.userId) {
-    conditions.push(where('userId', '==', filters.userId));
+    query = query.eq('userId', filters.userId);
   }
-  
-  // Order by creation time
-  conditions.push(orderBy('createdAt', 'desc'));
-  
+
+  // Order by creation time (descending)
+  query = query.order('createdAt', { ascending: false });
+
   // Limit results
   if (filters.limit) {
-    conditions.push(limit(filters.limit));
+    query = query.limit(filters.limit);
   }
-  
-  // Build query
-  if (conditions.length > 0) {
-    q = query(collection(db, 'alerts'), ...conditions);
-  }
-  
-  return onSnapshot(q, (snapshot) => {
-    const alerts = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    callback(alerts);
+
+  // Set up real-time subscription
+  const subscription = query.on('postgres_changes', {
+    event: '*',
+    schema: 'public',
+    table: 'alerts'
+  }, (payload) => {
+    // For real-time updates, we need to refetch the filtered data
+    getFilteredAlerts(filters, callback);
   });
+
+  // Initial fetch
+  getFilteredAlerts(filters, callback);
+
+  return subscription;
+};
+
+/**
+ * Helper function to get filtered alerts
+ */
+const getFilteredAlerts = async (filters, callback) => {
+  let query = db.from('alerts').select('*');
+
+  // Apply filters
+  if (filters.type) {
+    query = query.eq('type', filters.type);
+  }
+
+  if (filters.priority) {
+    query = query.eq('priority', filters.priority);
+  }
+
+  if (filters.read !== undefined) {
+    query = query.eq('read', filters.read);
+  }
+
+  if (filters.userId) {
+    query = query.eq('userId', filters.userId);
+  }
+
+  // Order by creation time (descending)
+  query = query.order('createdAt', { ascending: false });
+
+  // Limit results
+  if (filters.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Error fetching alerts:', error);
+    return;
+  }
+
+  callback(data || []);
 };
 
 /**
@@ -98,10 +139,12 @@ export const getRealTimeAlerts = (filters = {}, callback) => {
  */
 export const markAlertAsRead = async (alertId) => {
   try {
-    await updateDoc(doc(db, 'alerts', alertId), {
+    const { error } = await db.from('alerts').update({
       read: true,
-      updatedAt: serverTimestamp()
-    });
+      updatedAt: new Date().toISOString()
+    }).eq('id', alertId);
+
+    if (error) throw error;
   } catch (error) {
     console.error('Error marking alert as read:', error);
     throw error;
@@ -117,13 +160,15 @@ export const markAlertAsRead = async (alertId) => {
  */
 export const acknowledgeAlert = async (alertId, userId, notes = '') => {
   try {
-    await updateDoc(doc(db, 'alerts', alertId), {
+    const { error } = await db.from('alerts').update({
       acknowledged: true,
       acknowledgedBy: userId,
-      acknowledgedAt: serverTimestamp(),
+      acknowledgedAt: new Date().toISOString(),
       acknowledgmentNotes: notes,
-      updatedAt: serverTimestamp()
-    });
+      updatedAt: new Date().toISOString()
+    }).eq('id', alertId);
+
+    if (error) throw error;
   } catch (error) {
     console.error('Error acknowledging alert:', error);
     throw error;
@@ -136,12 +181,12 @@ export const acknowledgeAlert = async (alertId, userId, notes = '') => {
  */
 export const getAlertRules = async () => {
   try {
-    const q = query(collection(db, 'alert_rules'), orderBy('priority', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const { data, error } = await db.from('alert_rules')
+      .select('*')
+      .order('priority', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error getting alert rules:', error);
     throw error;
@@ -207,19 +252,24 @@ export const cleanupOldAlerts = async (days = 30) => {
   try {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
-    const q = query(
-      collection(db, 'alerts'),
-      where('createdAt', '<', cutoffDate),
-      where('acknowledged', '==', true)
-    );
-    
-    const snapshot = await getDocs(q);
-    const deletePromises = snapshot.docs.map(doc => 
-      updateDoc(doc.ref, { archived: true })
-    );
-    
-    await Promise.all(deletePromises);
+
+    // Get old acknowledged alerts
+    const { data: oldAlerts, error: fetchError } = await db.from('alerts')
+      .select('id')
+      .lt('createdAt', cutoffDate.toISOString())
+      .eq('acknowledged', true);
+
+    if (fetchError) throw fetchError;
+
+    if (oldAlerts && oldAlerts.length > 0) {
+      // Archive old alerts
+      const alertIds = oldAlerts.map(alert => alert.id);
+      const { error: updateError } = await db.from('alerts')
+        .update({ archived: true })
+        .in('id', alertIds);
+
+      if (updateError) throw updateError;
+    }
   } catch (error) {
     console.error('Error cleaning up old alerts:', error);
     throw error;

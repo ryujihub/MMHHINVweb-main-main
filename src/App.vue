@@ -4,8 +4,8 @@
     <div class="app-wrapper" :class="{ 'sidebar-hidden': !showSidebar }">
       <nav class="sidebar" :class="{ 'show-sidebar': showSidebar }">
         <div class="sidebar-header">
-          <h1>MMH Hardware</h1>
-          <p class="subtitle">Management System</p>
+          <h1>Metro Manila Hills Hardware</h1>
+          <p class="subtitle">Inventory Management System</p>
         </div>
         
         <div class="nav-links">
@@ -121,9 +121,7 @@
 import { ref, onMounted, toRefs } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
-import { auth, db } from './firebase/config'
-import { signOut, onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore' // Removed collection, query, where, onSnapshot
+import { auth, supabase } from './supabase/supabaseClient' // Changed db to supabase for clarity
 import { formatDistanceToNow } from 'date-fns'
 
 export default {
@@ -164,7 +162,7 @@ export default {
 
     const handleLogout = async () => {
       try {
-        await signOut(auth)
+        await authStore.logout()
         router.push('/login')
       } catch (error) {
         console.error('Logout error:', error)
@@ -182,21 +180,30 @@ export default {
       authStore.initializeAuth()
       
       // Listen for auth state changes
-      onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          // Fetch user data from Firestore
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
+      auth.onAuthStateChange(async (event, session) => {
+        if (session) {
+          const supabaseUser = session.user;
+          // Fetch user data from Supabase 'users' table
+          const { data: userData, error: userFetchError } = await supabase
+            .from('users')
+            .select('role') // Only select 'role' for now, as 'username' might not exist
+            .eq('id', supabaseUser.id)
+            .single();
 
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            username.value = userData.username || firebaseUser.displayName || 'User';
-            authStore.setUserRole(userData.role); // Use the action to update user role in store
+          if (userFetchError) {
+            console.error('Error fetching user profile from Supabase:', userFetchError.message);
+            username.value = supabaseUser.user_metadata.full_name || supabaseUser.email || 'User'; // Fallback to email
+            authStore.setUserRole('staff'); // Default role if user doc not found or error
+          } else if (userData) {
+            // If 'username' column exists in 'auth.users' or 'public.users' and is populated, use it.
+            // Otherwise, fallback to full_name from user_metadata or email.
+            username.value = supabaseUser.user_metadata.full_name || supabaseUser.email || 'User';
+            authStore.setUserRole(userData.role); // Update user role in store
           } else {
-            username.value = firebaseUser.displayName || 'User';
+            username.value = supabaseUser.user_metadata.full_name || supabaseUser.email || 'User'; // Fallback to email
             authStore.setUserRole('staff'); // Default role if user doc not found
           }
-          userAvatar.value = firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username.value) + '&background=random';
+          userAvatar.value = supabaseUser.user_metadata.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username.value) + '&background=random';
           
           // Removed: Fetch notifications
         } else {

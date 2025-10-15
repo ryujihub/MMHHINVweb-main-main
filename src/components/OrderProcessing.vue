@@ -146,7 +146,7 @@ import { ref, computed } from 'vue'
 import ProductCard from './ProductCard.vue'
 import { useInventoryStore } from '../stores/inventoryStore'
 import { collection, addDoc } from 'firebase/firestore'
-import { auth, db } from '../firebase/config'
+import { auth, db } from '../supabase/supabaseClient'
 import { useAuthStore } from '../stores/authStore'
 
 const inventoryStore = useInventoryStore()

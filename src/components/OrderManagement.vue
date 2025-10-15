@@ -277,19 +277,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/authStore'
 import { format } from 'date-fns'
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs,
-  updateDoc,
-  doc,
-  addDoc,
-  deleteDoc,
-  serverTimestamp 
-} from 'firebase/firestore'
-import { db } from '../firebase/config'
+import { db } from '../supabase/supabaseClient'
 
 const authStore = useAuthStore()
 
@@ -384,16 +372,17 @@ const sortedOrders = computed(() => {
 // Methods
 const fetchOrders = async () => {
   try {
-    const q = query(
-      collection(db, 'orders'),
-      orderBy('createdAt', 'desc')
-    )
-    
-    const snapshot = await getDocs(q)
-    orders.value = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate()
+    const { data, error } = await db
+      .from('orders')
+      .select('*')
+      .order('createdAt', { ascending: false })
+
+    if (error) throw error
+
+    orders.value = (data || []).map(order => ({
+      id: order.id,
+      ...order,
+      createdAt: new Date(order.createdAt)
     }))
   } catch (error) {
     console.error('Error fetching orders:', error)
@@ -402,15 +391,16 @@ const fetchOrders = async () => {
 
 const fetchStaffList = async () => {
   try {
-    const q = query(
-      collection(db, 'users'),
-      where('role', 'in', ['admin', 'staff'])
-    )
-    
-    const snapshot = await getDocs(q)
-    staffList.value = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
+    const { data, error } = await db
+      .from('users')
+      .select('*')
+      .in('role', ['admin', 'staff'])
+
+    if (error) throw error
+
+    staffList.value = (data || []).map(user => ({
+      id: user.id,
+      ...user
     }))
   } catch (error) {
     console.error('Error fetching staff list:', error)
@@ -447,19 +437,28 @@ const getSortIcon = (field) => {
 
 const updateOrderStatus = async (order) => {
   try {
-    const orderRef = doc(db, 'orders', order.id)
-    await updateDoc(orderRef, {
-      status: order.status,
-      lastUpdated: serverTimestamp()
-    })
+    const { error: updateError } = await db
+      .from('orders')
+      .update({
+        status: order.status,
+        lastUpdated: new Date().toISOString()
+      })
+      .eq('id', order.id)
+
+    if (updateError) throw updateError
 
     // Add to order history
-    await addDoc(collection(db, `orders/${order.id}/history`), {
-      type: 'status_change',
-      description: `Order status changed to ${order.status}`,
-      timestamp: serverTimestamp(),
-      updatedBy: authStore.user.uid
-    })
+    const { error: historyError } = await db
+      .from('order_history')
+      .insert({
+        orderId: order.id,
+        type: 'status_change',
+        description: `Order status changed to ${order.status}`,
+        timestamp: new Date().toISOString(),
+        updatedBy: authStore.user?.id || 'system'
+      })
+
+    if (historyError) throw historyError
   } catch (error) {
     console.error('Error updating order status:', error)
   }
@@ -467,22 +466,31 @@ const updateOrderStatus = async (order) => {
 
 const assignOrder = async (order) => {
   try {
-    const orderRef = doc(db, 'orders', order.id)
-    await updateDoc(orderRef, {
-      assignedTo: order.assignedTo,
-      lastUpdated: serverTimestamp()
-    })
+    const { error: updateError } = await db
+      .from('orders')
+      .update({
+        assignedTo: order.assignedTo,
+        lastUpdated: new Date().toISOString()
+      })
+      .eq('id', order.id)
+
+    if (updateError) throw updateError
 
     // Add to order history
     const staff = staffList.value.find(s => s.id === order.assignedTo)
-    await addDoc(collection(db, `orders/${order.id}/history`), {
-      type: 'assignment',
-      description: staff ? 
-        `Order assigned to ${staff.name}` : 
-        'Order unassigned',
-      timestamp: serverTimestamp(),
-      updatedBy: authStore.user.uid
-    })
+    const { error: historyError } = await db
+      .from('order_history')
+      .insert({
+        orderId: order.id,
+        type: 'assignment',
+        description: staff ?
+          `Order assigned to ${staff.name}` :
+          'Order unassigned',
+        timestamp: new Date().toISOString(),
+        updatedBy: authStore.user?.id || 'system'
+      })
+
+    if (historyError) throw historyError
   } catch (error) {
     console.error('Error assigning order:', error)
   }
@@ -519,21 +527,31 @@ const confirmCancelOrder = async () => {
       return
     }
 
-    const orderRef = doc(db, 'orders', orderId)
-    await updateDoc(orderRef, {
-      status: 'Cancelled',
-      cancellationReason: cancellationReason.value,
-      cancelledAt: serverTimestamp(),
-      cancelledBy: authStore.user?.uid || 'system'
-    })
+    // Update order status
+    const { error: updateError } = await db
+      .from('orders')
+      .update({
+        status: 'Cancelled',
+        cancellationReason: cancellationReason.value,
+        cancelledAt: new Date().toISOString(),
+        cancelledBy: authStore.user?.id || 'system'
+      })
+      .eq('id', orderId)
+
+    if (updateError) throw updateError
 
     // Add to order history
-    await addDoc(collection(db, `orders/${orderId}/history`), {
-      type: 'cancellation',
-      description: `Order cancelled: ${cancellationReason.value}`,
-      timestamp: serverTimestamp(),
-      updatedBy: authStore.user?.uid || 'system'
-    })
+    const { error: historyError } = await db
+      .from('order_history')
+      .insert({
+        orderId: orderId,
+        type: 'cancellation',
+        description: `Order cancelled: ${cancellationReason.value}`,
+        timestamp: new Date().toISOString(),
+        updatedBy: authStore.user?.id || 'system'
+      })
+
+    if (historyError) throw historyError
 
     // Update local state
     const order = orders.value.find(o => o.id === orderId)
@@ -546,7 +564,7 @@ const confirmCancelOrder = async () => {
     showCancelModal.value = false
     cancellationReason.value = ''
     orderToCancel.value = null
-    
+
     alert('Order cancelled successfully!')
   } catch (error) {
     console.error('Error cancelling order:', error)
@@ -564,7 +582,14 @@ const confirmDeleteOrder = async () => {
 
   try {
     const orderId = orderToDelete.value.id
-    await deleteDoc(doc(db, 'orders', orderId))
+
+    // Delete order from database
+    const { error } = await db
+      .from('orders')
+      .delete()
+      .eq('id', orderId)
+
+    if (error) throw error
 
     // Remove from local state
     orders.value = orders.value.filter(o => o.id !== orderId)
@@ -572,7 +597,7 @@ const confirmDeleteOrder = async () => {
     // Reset modal
     showDeleteModal.value = false
     orderToDelete.value = null
-    
+
     alert('Order deleted successfully!')
   } catch (error) {
     console.error('Error deleting order:', error)

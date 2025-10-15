@@ -8,6 +8,7 @@ import SalesReports from '../components/SalesReports.vue';
 import InventoryReports from '../components/InventoryReports.vue';
 import GuideManual from '../components/GuideManual.vue';
 import { auth } from '../supabase/supabaseClient';
+import { useAuthStore } from '../stores/authStore'; // Import the auth store
 
 const routes = [
   {
@@ -72,25 +73,35 @@ const router = createRouter({
 // Wait for Firebase Auth to initialize before checking auth state
 let isAuthReady = false;
 const waitForAuth = new Promise(resolve => {
-  const unsubscribe = auth.onAuthStateChanged(user => {
+  const { data: { subscription } } = auth.onAuthStateChange((event, session) => {
     isAuthReady = true;
-    unsubscribe();
-    resolve(user);
+    subscription.unsubscribe();
+    resolve(session ? session.user : null);
   });
 });
 
 router.beforeEach(async (to, from, next) => {
+  console.log('Router beforeEach triggered. Navigating to:', to.path);
   if (!isAuthReady) {
+    console.log('Waiting for auth to be ready...');
     await waitForAuth;
+    console.log('Auth is now ready.');
   }
+
+  const authStore = useAuthStore(); // Get the auth store instance
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  const isAuthenticated = auth.currentUser;
+  const isAuthenticated = authStore.isAuthenticated; // Use the reactive isAuthenticated from the store
+
+  console.log('Requires Auth:', requiresAuth, 'Is Authenticated:', isAuthenticated);
 
   if (requiresAuth && !isAuthenticated) {
+    console.log('Redirecting to /login: Requires auth but not authenticated.');
     next('/login');
   } else if (to.path === '/login' && isAuthenticated) {
+    console.log('Redirecting to /: Authenticated user trying to access /login.');
     next('/');
   } else {
+    console.log('Proceeding with navigation to:', to.path);
     next();
   }
 });

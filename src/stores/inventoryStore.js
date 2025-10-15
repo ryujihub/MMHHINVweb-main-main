@@ -12,6 +12,8 @@ export const useInventoryStore = defineStore('inventory', () => {
   const notifications = ref([])
   const loading = ref(false)
   const categories = ref([]) // Initialize as empty, will be populated from DB
+  const inventoryError = ref(null); // New error state for inventory fetching
+  const isInitialized = ref(false); // Track if listener is already initialized
 
   // Constants
   const LOW_STOCK_THRESHOLD = 10
@@ -24,29 +26,192 @@ export const useInventoryStore = defineStore('inventory', () => {
     return dailyOrders.value.reduce((total, order) => total + order.total, 0)
   })
 
-  // Initialize inventory and notifications
-  const initializeInventoryListener = () => {
-    db.from('inventory')
-      .on('*', payload => {
-        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          const updatedItem = { id: payload.new.id, ...payload.new };
-          const index = inventory.value.findIndex(item => item.id === updatedItem.id);
-          if (index !== -1) {
-            inventory.value[index] = updatedItem;
-          } else {
-            inventory.value.push(updatedItem);
-          }
-        } else if (payload.eventType === 'DELETE') {
-          inventory.value = inventory.value.filter(item => item.id !== payload.old.id);
-        }
-        updateStockAlerts();
-        fetchCategories();
-      })
-      .subscribe();
+  // Helper to map Supabase data to store format
+  const mapInventoryItem = (item) => {
+    console.log('Mapping item:', item);
+    console.log('Item fields:', Object.keys(item));
 
-    // Listen for new orders
-    db.from('orders')
-      .on('*', payload => {
+    // Map the actual database fields to expected format
+    const mappedItem = {
+      id: item.id,
+      name: item.name || item.productName || `Product ${item.flctCode || item.id}`,
+      description: item.description || '',
+      price: item.price || item.sellingPrice || item.unitPrice || 0,
+      cost: item.cost || item.purchasePrice || 0,
+      currentStock: item.currentStock || item.physicalCount || item.stock || 0,
+      minimumStock: item.minimumStock || item.targetStockLevel || item.minStock || 10,
+      reorderPoint: Math.floor((item.minimumStock || item.targetStockLevel || item.minStock || 10) * 0.2) || 5,
+      category: item.category || 'Uncategorized',
+      productCode: item.productCode || item.flctCode || item.code || item.id,
+      sku: item.sku || item.productCode || item.flctCode || '',
+      unit: item.unit || 'pcs',
+      inventoryVariance: item.inventoryVariance || 0,
+      variancePercentage: item.variancePercentage || 0,
+      usage: item.usage || 0,
+      lastUpdated: item.lastUpdated || item.updatedAt,
+      createdAt: item.createdAt,
+      userId: item.userId
+    };
+
+    console.log('Mapped item:', mappedItem);
+    return mappedItem;
+  };
+
+  // Initialize inventory and notifications
+  const initializeInventoryListener = async () => {
+    // Prevent multiple initializations
+    if (isInitialized.value) {
+      console.log('Inventory listener already initialized, skipping...');
+      return;
+    }
+
+    console.log('Attempting to initialize inventory listener...');
+    isInitialized.value = true;
+
+    try {
+      // Fetch initial inventory data
+      console.log('Fetching initial inventory data from hardwareinventory table...');
+
+      // First, let's check what tables are available
+      try {
+        const { data: tables, error: tablesError } = await db.from('information_schema.tables')
+          .select('table_name')
+          .eq('table_schema', 'public')
+          .like('table_name', '%hardware%');
+
+        if (tablesError) {
+          console.log('Could not check tables, proceeding with direct query...');
+        } else {
+          console.log('Available hardware-related tables:', tables);
+        }
+      } catch (tableCheckError) {
+        console.log('Table check failed, continuing with direct query...');
+      }
+
+      const { data, error } = await db.from('hardwareinventory').select('*');
+      if (error) {
+        console.error('Supabase error fetching initial inventory:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+
+        // If table doesn't exist, try alternative table names
+        if (error.code === 'PGRST116' || error.message.includes('relation "hardwareinventory" does not exist')) {
+          console.log('hardwareinventory table not found, trying alternative table names...');
+
+          // Try alternative table names
+          const possibleTables = ['inventory', 'products', 'hardware_inventory', 'items', 'hardwareactivity'];
+
+          for (const tableName of possibleTables) {
+            try {
+              console.log(`Trying table: ${tableName}`);
+              const { data: altData, error: altError } = await db.from(tableName).select('*');
+              if (!altError && altData) {
+                console.log(`Found data in table: ${tableName}`, altData);
+                data = altData;
+                break;
+              }
+            } catch (e) {
+              console.log(`Table ${tableName} not found or error:`, e);
+            }
+          }
+        } else {
+          throw error;
+        }
+      }
+
+      console.log('Raw data fetched from Supabase:', data);
+      console.log('Data length:', data?.length || 0);
+      console.log('First item (if any):', data?.[0]);
+
+      // If still no data, log available tables for debugging
+      if (!data || data.length === 0) {
+        console.log('No data found, checking available tables...');
+        try {
+          const { data: tables, error: tablesError } = await db
+            .from('information_schema.tables')
+            .select('table_name')
+            .eq('table_schema', 'public');
+
+          if (!tablesError) {
+            console.log('Available tables in public schema:', tables?.map(t => t.table_name));
+          }
+        } catch (e) {
+          console.log('Could not fetch table list:', e);
+        }
+      }
+
+      // If no data, try alternative table names
+      if (!data || data.length === 0) {
+        console.log('No data found in hardwareinventory, checking other possible table names...');
+
+        // Try alternative table names
+        const possibleTables = ['inventory', 'products', 'hardware_inventory', 'items'];
+
+        for (const tableName of possibleTables) {
+          try {
+            console.log(`Trying table: ${tableName}`);
+            const { data: altData, error: altError } = await db.from(tableName).select('*');
+            if (!altError && altData && altData.length > 0) {
+              console.log(`Found data in table: ${tableName}`, altData);
+              // Use this data instead
+              data = altData;
+              break;
+            }
+          } catch (e) {
+            console.log(`Table ${tableName} not found or error:`, e);
+          }
+        }
+      }
+
+      // Use existing data as-is
+      console.log('Using existing inventory data from database');
+
+      console.log('Mapping data to inventory items...');
+      inventory.value = data.map(mapInventoryItem);
+      console.log('Initial inventory fetched:', inventory.value);
+      console.log('Raw data from Supabase:', data);
+      console.log('Mapped inventory items:', inventory.value);
+      updateStockAlerts();
+      await fetchCategories(); // Ensure categories are fetched after initial inventory
+      console.log('Categories fetched after initial inventory.');
+
+      // Listen for changes in the 'hardwareinventory' table
+      console.log('Setting up real-time listener for hardwareinventory changes...');
+      db.channel('hardwareinventory_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'hardwareinventory' }, payload => {
+          console.log('Real-time inventory change detected:', payload.eventType, payload.new || payload.old);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const updatedItem = mapInventoryItem(payload.new);
+            const index = inventory.value.findIndex(item => item.id === updatedItem.id);
+            if (index !== -1) {
+              inventory.value[index] = updatedItem;
+            } else {
+              inventory.value.push(updatedItem);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            inventory.value = inventory.value.filter(item => item.id !== payload.old.id);
+          }
+          updateStockAlerts();
+          fetchCategories();
+          console.log('Inventory updated via real-time listener:', inventory.value);
+        })
+        .subscribe();
+      console.log('Inventory listener initialized successfully.');
+    } catch (error) {
+      console.error('Error initializing inventory listener:', error);
+      inventoryError.value = "Failed to load inventory data.";
+    }
+
+    // Listen for changes in the 'orders' table
+    console.log('Attempting to initialize orders listener...');
+
+    // Listen for changes in the 'orders' table
+    db.channel('orders_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => {
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const updatedOrder = { id: payload.new.id, ...payload.new };
           const index = dailyOrders.value.findIndex(order => order.id === updatedOrder.id);
@@ -56,11 +221,12 @@ export const useInventoryStore = defineStore('inventory', () => {
             dailyOrders.value.unshift(updatedOrder); // Add new orders to the beginning
           }
         } else if (payload.eventType === 'DELETE') {
-          dailyOrders.value = dailyOrders.value.filter(order => order.id !== payload.old.id);
+          dailyOrders.value = dailyOrders.value.filter(item => item.id !== payload.old.id);
         }
-        console.log("Fetched orders:", dailyOrders.value.map(order => ({ id: order.id, ...order })));
+        console.log("Daily orders updated:", dailyOrders.value.map(order => ({ id: order.id, ...order })));
       })
       .subscribe();
+    console.log('Orders listener initialized.');
   }
 
   // Handle low stock items
@@ -72,16 +238,19 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   // Update stock alerts and notifications
   const updateStockAlerts = () => {
-    lowStockItems.value = inventory.value.filter(item => 
-      item.currentStock > 0 && item.currentStock <= LOW_STOCK_THRESHOLD
-    )
-    
+    lowStockItems.value = inventory.value.filter(item => {
+      // Use minimumStock if available, otherwise fall back to LOW_STOCK_THRESHOLD
+      const threshold = item.minimumStock || LOW_STOCK_THRESHOLD
+      return item.currentStock > 0 && item.currentStock <= threshold
+    })
+
     // Create notifications for low stock items
     lowStockItems.value.forEach(item => {
+      const threshold = item.minimumStock || LOW_STOCK_THRESHOLD
       addNotification({
         type: 'low_stock',
         title: 'Low Stock Alert',
-        message: `${item.name} - only ${item.currentStock} left in stock`,
+        message: `${item.name} - only ${item.currentStock} left in stock (minimum: ${threshold})`,
         severity: 'warning'
       })
     })
@@ -89,18 +258,23 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   // Fetch top selling items
   const fetchTopSellingItems = async (timeRange = 'day') => {
+    console.log(`Fetching top selling items for period: ${timeRange}`);
     try {
       loading.value = true
       const start = timeRange === 'week' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : startOfDay(new Date())
       
       const { data: orders, error } = await db
-        .from('orders')
+        .from('hardwareorders') // Changed to hardwareorders
         .select('*')
         .gte('createdAt', start.toISOString())
         .order('createdAt', { ascending: false })
         .limit(100); // Assuming a limit similar to the initial listener
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching top selling items:', error);
+        throw error;
+      }
+      console.log('Raw orders for top selling:', orders);
 
       // Calculate most ordered items
       const itemCounts = {}
@@ -122,8 +296,10 @@ export const useInventoryStore = defineStore('inventory', () => {
           ...item,
           quantitySold: itemCounts[item.id]
         }))
+      console.log('Top selling items:', topSellingItems.value);
     } catch (error) {
       console.error('Error fetching top selling items:', error)
+      topSellingError.value = "Failed to load top selling items."; // Ensure error is propagated to component
     } finally {
       loading.value = false
     }
@@ -148,7 +324,7 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   const createStockAlert = async (productId, type, message) => {
     try {
-      const { error } = await db.from('alerts').insert({
+      const { error } = await db.from('hardwarealerts').insert({ // Changed to hardwarealerts
         productId,
         type,
         message,
@@ -174,7 +350,7 @@ export const useInventoryStore = defineStore('inventory', () => {
     try {
       // If orderId provided, attempt to read order and short-circuit if processed
       if (orderId) {
-        const { data: existingOrder, error: fetchError } = await db.from('orders').select('processed').eq('id', orderId).single();
+        const { data: existingOrder, error: fetchError } = await db.from('hardwareorders').select('processed').eq('id', orderId).single(); // Changed to hardwareorders
         if (fetchError && fetchError.code !== 'PGRST116') throw fetchError; // PGRST116 means no rows found
         if (existingOrder && existingOrder.processed) {
           // Already processed — nothing to do
@@ -190,19 +366,21 @@ export const useInventoryStore = defineStore('inventory', () => {
         }
 
         const newStock = product.currentStock - item.quantity;
-        const { error: updateError } = await db.from('inventory')
-          .update({ currentStock: newStock, lastUpdated: new Date().toISOString() })
+        const { error: updateError } = await db.from('hardwareinventory') // Changed to hardwareinventory
+          .update({ currentStock: newStock, lastUpdated: new Date().toISOString() }) // Use actual column name currentStock
           .eq('id', item.id);
         if (updateError) throw updateError;
 
-        if (newStock <= LOW_STOCK_THRESHOLD) {
-          lowStockAlerts.push({ id: item.id, name: item.name, newStock });
+        // Use item's minimumStock threshold if available, otherwise use default
+        const threshold = product.minimumStock || LOW_STOCK_THRESHOLD
+        if (newStock <= threshold) {
+          lowStockAlerts.push({ id: item.id, name: item.name, newStock, threshold });
         }
       }
 
       // Mark order processed if orderId supplied
       if (orderId) {
-        const { error: updateOrderError } = await db.from('orders')
+        const { error: updateOrderError } = await db.from('hardwareorders') // Changed to hardwareorders
           .update({ processed: true, processedAt: new Date().toISOString() })
           .eq('id', orderId);
         if (updateOrderError) throw updateOrderError;
@@ -225,15 +403,18 @@ export const useInventoryStore = defineStore('inventory', () => {
   const getSalesByPeriod = async (startDate, endDate) => {
     try {
       const { data: orders, error } = await db
-        .from('orders')
+        .from('hardwareorders') // Changed to hardwareorders
         .select('*')
         .gte('createdAt', startDate.toISOString())
         .lte('createdAt', endDate.toISOString())
         .order('createdAt', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching sales by period:', error);
+        throw error;
+      }
 
-      console.log("Fetching sales data from:", startDate, "to:", endDate);
+      console.log("Fetched sales data from:", startDate, "to:", endDate, "Data:", orders);
       const salesByDate = {};
       orders.forEach(order => {
         const orderDate = new Date(order.createdAt).toLocaleDateString('en-US');
@@ -272,8 +453,12 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   const getInventoryBreakdown = async () => {
     try {
-      const { data: items, error } = await db.from('inventory').select('*');
-      if (error) throw error;
+      const { data: items, error } = await db.from('hardwareinventory').select('*'); // Changed to hardwareinventory
+      if (error) {
+        console.error('Supabase error fetching inventory breakdown:', error);
+        throw error;
+      }
+      console.log('Fetched inventory items for breakdown:', items);
 
       const breakdownMap = {};
       categories.value.forEach(category => {
@@ -298,9 +483,14 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   // Fetch unique categories from inventory
   const fetchCategories = async () => {
+    console.log('Attempting to fetch categories...');
     try {
-      const { data, error } = await db.from('inventory').select('category');
-      if (error) throw error;
+      const { data, error } = await db.from('hardwareinventory').select('category'); // Changed to hardwareinventory
+      if (error) {
+        console.error('Supabase error fetching categories:', error);
+        throw error;
+      }
+      console.log('Raw categories fetched:', data);
 
       const uniqueCategories = new Set();
       data.forEach(item => {
@@ -309,10 +499,15 @@ export const useInventoryStore = defineStore('inventory', () => {
         }
       });
       categories.value = Array.from(uniqueCategories);
+      console.log('Unique categories:', categories.value);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   }
+
+
+
+
 
   return {
     inventory,

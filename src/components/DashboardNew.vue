@@ -246,8 +246,16 @@ const formatTime = (timestamp) => {
 
 // Lifecycle hooks
 onMounted(async () => {
+  console.log('DashboardNew.vue onMounted hook triggered.');
+  console.log('User value in DashboardNew.vue onMounted:', user.value);
   if (user.value) {
-    inventoryStore.initializeInventoryListener();
+    console.log('Calling inventoryStore.initializeInventoryListener()...');
+    try {
+      inventoryStore.initializeInventoryListener();
+    } catch (error) {
+      console.error('Synchronous error calling initializeInventoryListener:', error);
+    }
+    
     isLoadingTopSelling.value = true;
     topSellingError.value = null;
     try {
@@ -259,6 +267,8 @@ onMounted(async () => {
       isLoadingTopSelling.value = false;
     }
     await fetchChartData();
+  } else {
+    console.log('User not logged in, not fetching dashboard data.');
   }
 });
 </script>

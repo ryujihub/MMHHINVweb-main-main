@@ -55,7 +55,7 @@
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { auth, db } from '../supabase/supabaseClient'
+import { auth, supabase } from '../supabase/supabaseClient'
 
 export default {
   setup() {
@@ -77,10 +77,14 @@ export default {
     const login = async () => {
       error.value = ''
       try {
-        await signInWithEmailAndPassword(auth, email.value, password.value)
+        const { error: signInError } = await auth.signInWithPassword({
+          email: email.value,
+          password: password.value,
+        })
+        if (signInError) throw signInError
         router.push('/')
       } catch (err) {
-        console.error('Login error:', err.message); // Add console.error for debugging
+        console.error('Login error:', err.message)
         error.value = err.message
       }
     }
@@ -88,16 +92,23 @@ export default {
     const register = async () => {
       error.value = ''
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value)
-        const userDataToSave = {
-          username: username.value, // Save username
-          role: role.value
-        };
-        console.log('Saving user data to Firestore:', userDataToSave); // Debugging log
-        await setDoc(doc(db, "users", userCredential.user.uid), userDataToSave);
+        const { data, error: signUpError } = await auth.signUp({
+          email: email.value,
+          password: password.value,
+        })
+        if (signUpError) throw signUpError
+
+        if (data.user) {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([
+              { id: data.user.id, username: username.value, role: role.value, email: email.value }
+            ])
+          if (insertError) throw insertError
+        }
         router.push('/')
       } catch (err) {
-        console.error('Registration error:', err.message); // Add console.error for debugging
+        console.error('Registration error:', err.message)
         error.value = err.message
       }
     }
@@ -105,10 +116,13 @@ export default {
     const loginWithGoogle = async () => {
       error.value = ''
       try {
-        const provider = new GoogleAuthProvider()
-        await signInWithPopup(auth, provider)
-        router.push('/')
+        const { error: signInError } = await auth.signInWithOAuth({
+          provider: 'google',
+        })
+        if (signInError) throw signInError
+        // Supabase redirects after OAuth, so no need for router.push here immediately
       } catch (err) {
+        console.error('Google login error:', err.message)
         error.value = err.message
       }
     }

@@ -24,27 +24,27 @@
     </div>
 
     <div class="products-grid">
-      <div 
-        v-for="product in filteredProducts" 
-        :key="product.id" 
+      <div
+        v-for="product in filteredProducts"
+        :key="product.id"
         class="product-card"
-        :class="{ 'low-stock': product.currentStock <= LOW_STOCK_THRESHOLD }"
+        :class="{ 'low-stock': isLowStock(product) }"
       >
         <div class="product-header">
           <h3>{{ product.name }}</h3>
           <span class="category-badge">{{ product.category }}</span>
         </div>
-        
+
         <div class="product-details">
           <div class="price">₱{{ formatPrice(product.price) }}</div>
-          <div class="stock-status" 
-               :class="{ 
-                 'warning': product.currentStock <= LOW_STOCK_THRESHOLD,
-                 'out': product.currentStock === 0 
+          <div class="stock-status"
+               :class="{
+                 'warning': isLowStock(product),
+                 'out': product.currentStock === 0
                }"
           >
-            <i class="fas" :class="getStockIcon(product.currentStock)"></i>
-            {{ getStockStatus(product.currentStock) }}
+            <i class="fas" :class="getStockIcon(product)"></i>
+            {{ getStockStatus(product) }}
           </div>
         </div>
 
@@ -60,7 +60,7 @@
         </div>
 
         <!-- Low Stock Warning -->
-        <div v-if="product.currentStock <= LOW_STOCK_THRESHOLD && product.currentStock > 0" 
+        <div v-if="isLowStock(product) && product.currentStock > 0"
              class="stock-warning">
           <i class="fas fa-exclamation-triangle"></i>
           Low Stock Alert
@@ -77,22 +77,43 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useInventoryStore } from '../stores/inventoryStore'
 
 const inventoryStore = useInventoryStore()
+
+// Initialize inventory data when component mounts
+onMounted(async () => {
+  console.log('ProductCatalog mounted - initializing inventory listener')
+
+  try {
+    await inventoryStore.initializeInventoryListener()
+
+    // Additional check: if still no products after initialization, force add samples
+    setTimeout(async () => {
+      if (inventoryStore.inventory.length === 0) {
+        console.log('No products found after initialization, forcing sample data...')
+        await inventoryStore.initializeInventoryListener()
+      }
+    }, 2000)
+  } catch (error) {
+    console.error('Error initializing inventory:', error)
+  }
+})
 
 // Local state
 const searchQuery = ref('')
 const selectedCategory = ref('')
 
 // Constants from store
-const { LOW_STOCK_THRESHOLD } = inventoryStore
 const categories = computed(() => inventoryStore.categories)
 
 // Computed properties
 const filteredProducts = computed(() => {
   let products = inventoryStore.inventory
+
+  console.log('All inventory products:', products)
+  console.log('Total products in store:', products.length)
 
   if (selectedCategory.value) {
     products = products.filter(p => p.category === selectedCategory.value)
@@ -100,13 +121,14 @@ const filteredProducts = computed(() => {
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    products = products.filter(p => 
+    products = products.filter(p =>
       p.name.toLowerCase().includes(query) ||
       p.productCode.toLowerCase().includes(query) ||
       p.category.toLowerCase().includes(query)
     )
   }
 
+  console.log('Filtered products:', products)
   return products
 })
 
@@ -115,15 +137,20 @@ const formatPrice = (price) => {
   return price.toLocaleString('en-PH')
 }
 
-const getStockStatus = (stock) => {
-  if (stock === 0) return 'Out of Stock'
-  if (stock <= LOW_STOCK_THRESHOLD) return 'Low Stock'
+const isLowStock = (product) => {
+  const threshold = product.minimumStock || 10
+  return product.currentStock <= threshold
+}
+
+const getStockStatus = (product) => {
+  if (product.currentStock === 0) return 'Out of Stock'
+  if (isLowStock(product)) return 'Low Stock'
   return 'In Stock'
 }
 
-const getStockIcon = (stock) => {
-  if (stock === 0) return 'fa-times-circle'
-  if (stock <= LOW_STOCK_THRESHOLD) return 'fa-exclamation-circle'
+const getStockIcon = (product) => {
+  if (product.currentStock === 0) return 'fa-times-circle'
+  if (isLowStock(product)) return 'fa-exclamation-circle'
   return 'fa-check-circle'
 }
 
@@ -131,6 +158,8 @@ const filterProducts = () => {
   // This function exists to handle any side effects of filtering
   // Currently using computed properties, but might need for future updates
 }
+
+
 </script>
 
 <style scoped>
@@ -288,6 +317,8 @@ const filterProducts = () => {
   font-size: 3rem;
   margin-bottom: 1rem;
 }
+
+
 
 @media (max-width: 640px) {
   .product-catalog {
