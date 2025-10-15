@@ -54,7 +54,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (error) {
       console.error('Error fetching user role:', error)
-      userRole.value = 'staff'
+      // Don't set default role here, let the auth state handle it
+      if (error.code === 'permission-denied') {
+        console.log('Permission denied: User may need to be created by admin');
+        userRole.value = 'staff'; // Default to staff for security
+      } else {
+        userRole.value = 'staff'; // Default fallback
+      }
     }
   }
 

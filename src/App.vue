@@ -34,7 +34,7 @@
               </router-link>
             </div>
           </div>
-          <div class="nav-item has-submenu">
+          <div v-if="userRole === 'admin'" class="nav-item has-submenu">
             <a href="#" class="nav-link" @click.prevent="toggleReportsSubMenu">
               <i class="fas fa-chart-bar"></i> <!-- Icon for Reports -->
               Reports

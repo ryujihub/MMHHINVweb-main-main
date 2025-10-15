@@ -18,7 +18,7 @@
           <select v-if="isAdmin" v-model="staffFilter">
             <option value="">All Staff</option>
             <option v-for="staff in staffList" :key="staff.id">
-              {{ staff.name }}
+              {{ staff.username || staff.name || staff.email }}
             </option>
           </select>
         </div>
@@ -92,19 +92,19 @@
               </select>
             </td>
             <td>
-              <select 
+              <select
                 v-if="isAdmin"
                 v-model="order.assignedTo"
                 @change="assignOrder(order)"
                 class="staff-select"
               >
                 <option value="">Unassigned</option>
-                <option 
-                  v-for="staff in staffList" 
+                <option
+                  v-for="staff in staffList"
                   :key="staff.id"
                   :value="staff.id"
                 >
-                  {{ staff.name }}
+                  {{ staff.username || staff.name || staff.email }}
                 </option>
               </select>
               <span v-else>
