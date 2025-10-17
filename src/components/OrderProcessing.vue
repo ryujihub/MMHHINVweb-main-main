@@ -20,10 +20,14 @@
           </div>
 
           <div class="category-filter">
-            <select v-model="categoryFilter" @change="filterProducts" class="category-select">
-              <option value="">All Categories</option>
-              <option v-for="category in categories" :key="category">{{ category }}</option>
-            </select>
+            <div class="category-select-wrapper">
+              <i class="fas fa-th-large"></i>
+              <select v-model="categoryFilter" @change="filterProducts" class="category-select">
+                <option value="">All Categories</option>
+                <option v-for="category in categories" :key="category">{{ category }}</option>
+              </select>
+              <i class="fas fa-chevron-down select-arrow"></i>
+            </div>
           </div>
         </div>
 
@@ -183,11 +187,11 @@ const filteredProducts = computed(() => {
     products = products.filter(p => p.category === categoryFilter.value)
   }
 
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    products = products.filter(p => 
-      p.name.toLowerCase().includes(query) ||
-      p.sku.toLowerCase().includes(query)
+  if (searchQuery.value && searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    products = products.filter(p =>
+      (p.name && p.name.toLowerCase().includes(query)) ||
+      (p.sku && p.sku.toLowerCase().includes(query))
     )
   }
 
@@ -203,6 +207,12 @@ const cartTotal = computed(() => cartSubtotal.value + deliveryFee.value)
 // Methods
 const formatPrice = (price) => {
   return price.toLocaleString('en-PH')
+}
+
+const filterProducts = () => {
+  // This function is called on search input
+  // The actual filtering is handled by the computed property filteredProducts
+  // No additional logic needed as computed property reacts to searchQuery changes
 }
 
 const addToCart = (product) => {
@@ -464,9 +474,73 @@ const printOrderSlip = (orderId, orderData) => {
   border-radius: 8px;
 }
 
+.category-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  min-width: 120px;
+  height: 36px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.category-select-wrapper:hover {
+  border-color: #0b63ff;
+  box-shadow: 0 2px 8px rgba(11, 99, 255, 0.12);
+}
+
+.category-select-wrapper:focus-within {
+  border-color: #0b63ff;
+  box-shadow: 0 0 0 2px rgba(11, 99, 255, 0.1);
+}
+
+.category-select-wrapper i:first-child {
+  color: #0b63ff;
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.category-select {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.category-select option {
+  padding: 0.4rem;
+}
+
+.select-arrow {
+  color: #9ca3af;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.category-select-wrapper:hover .select-arrow {
+  color: #0b63ff;
+}
+
+.category-select:focus + .select-arrow {
+  transform: translateY(1px);
+}
+
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
 }
 
@@ -509,7 +583,10 @@ const printOrderSlip = (orderId, orderData) => {
 }
 
 @media (max-width: 640px) {
-  .products-grid { grid-template-columns: 1fr }
+  .products-grid {
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.5rem;
+  }
   .toolbar { flex-direction:column; align-items:stretch }
   .mobile-bar { display:flex; position:fixed; bottom:12px; left:12px; right:12px; gap:0.6rem; background:#ffffff; padding:0.6rem; border-radius:10px; box-shadow:0 8px 26px rgba(20,20,40,0.12); align-items:center; justify-content:space-between }
   .process-btn { background:#0b63ff; color:white; padding:0.5rem 0.8rem; border-radius:8px; border:none }

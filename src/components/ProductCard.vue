@@ -33,17 +33,18 @@ export default {
 <style scoped>
 .product-card {
   background: white;
-  border-radius: 8px;
-  padding: 0.75rem;
+  border-radius: 6px;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  gap: 0.3rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   border: 1px solid #e2e8f0;
   transition: all 0.2s;
   cursor: pointer;
-  aspect-ratio: 1 / 1;
+  min-height: 80px;
+  max-width: 120px;
 }
 
 .product-card:hover {
@@ -83,5 +84,54 @@ export default {
   background: #f1f5f9;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+/* Mobile POS-style responsive adjustments */
+@media (max-width: 768px) {
+  .product-card {
+    padding: 0.4rem;
+    min-height: 70px;
+    max-width: 100px;
+    gap: 0.2rem;
+  }
+
+  .product-name {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+
+  .product-price {
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
+  }
+
+  .product-stock {
+    font-size: 0.6rem;
+    padding: 1px 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-card {
+    padding: 0.35rem;
+    min-height: 60px;
+    max-width: 90px;
+    gap: 0.15rem;
+  }
+
+  .product-name {
+    font-size: 0.65rem;
+    line-height: 1;
+  }
+
+  .product-price {
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+  }
+
+  .product-stock {
+    font-size: 0.55rem;
+    padding: 0.5px 2px;
+  }
 }
 </style>

@@ -265,34 +265,36 @@ onMounted(async () => {
 
 <style scoped>
 .dashboard {
-  padding: 1.5rem;
-  /* Removed max-width to allow it to expand */
+  padding: 1rem;
   margin: 0 auto;
+  max-width: 1400px;
 }
 
 .dashboard-container {
-  /* Removed max-width to allow it to expand */
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem;
+  max-width: 1400px;
 }
 
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .header-content h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .header-content .subtitle {
   color: #7f8c8d;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .date-filter {
@@ -305,7 +307,7 @@ onMounted(async () => {
 }
 
 .filter-btn {
-  padding: 0.5rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   border: none;
   background: transparent;
   color: #7f8c8d;
@@ -313,6 +315,7 @@ onMounted(async () => {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
+  font-size: 0.9rem;
 }
 
 .filter-btn.active {
@@ -568,5 +571,233 @@ onMounted(async () => {
 .error-state {
   color: #e74c3c;
   font-weight: bold;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+  .dashboard {
+    padding: 0.75rem;
+  }
+
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .section-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 0.5rem;
+  }
+
+  .dashboard-container {
+    padding: 0.75rem;
+  }
+
+  .dashboard-header {
+    margin-bottom: 1rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-content .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .date-filter {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-btn {
+    flex: 1;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-amount {
+    font-size: 1rem;
+  }
+
+  .section-card {
+    padding: 1rem;
+  }
+
+  .section-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .item-row {
+    padding: 0.75rem;
+  }
+
+  .chart-card {
+    padding: 1rem;
+  }
+
+  .chart-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 0.25rem;
+  }
+
+  .dashboard-container {
+    padding: 0.5rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.1rem;
+  }
+
+  .header-content .subtitle {
+    font-size: 0.75rem;
+  }
+
+  .date-filter {
+    padding: 0.2rem;
+    gap: 0.25rem;
+  }
+
+  .filter-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .stat-info h3 {
+    font-size: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-amount {
+    font-size: 0.9rem;
+  }
+
+  .stat-change {
+    font-size: 0.75rem;
+  }
+
+  .section-card {
+    padding: 0.75rem;
+  }
+
+  .section-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .item-row {
+    padding: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .item-info {
+    gap: 0.2rem;
+  }
+
+  .item-name {
+    font-size: 0.9rem;
+  }
+
+  .item-category {
+    font-size: 0.8rem;
+  }
+
+  .item-stats {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .item-quantity,
+  .item-stock {
+    font-size: 0.8rem;
+  }
+
+  .chart-card {
+    padding: 0.75rem;
+  }
+
+  .chart-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
 }
 </style>

@@ -40,10 +40,7 @@
         <button type="submit" :disabled="!isCaptchaValid">Login</button>
         <p v-if="error" class="error">{{ error }}</p>
       </form>
-      <button @click="loginWithGoogle" class="google-btn">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-        Sign in with Google
-      </button>
+
     </div>
   </div>
 </template>
@@ -53,9 +50,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '../firebase/config'
 import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup
+  signInWithEmailAndPassword
 } from 'firebase/auth'
 
 export default {
@@ -127,16 +122,7 @@ export default {
       showPassword.value = !showPassword.value
     }
 
-    const loginWithGoogle = async () => {
-      error.value = ''
-      try {
-        const provider = new GoogleAuthProvider()
-        await signInWithPopup(auth, provider)
-        router.push('/')
-      } catch (err) {
-        error.value = err.message
-      }
-    }
+
 
     // Initialize CAPTCHA on component setup
     generateCaptcha()
@@ -147,7 +133,6 @@ export default {
       password,
       error,
       login,
-      loginWithGoogle,
       showPassword,
       passwordFieldType,
       togglePasswordVisibility,
@@ -174,10 +159,23 @@ export default {
   align-items: center;
 }
 
+/* Tablet responsiveness */
+@media (max-width: 768px) {
+  .auth-container {
+    max-width: 400px;
+    margin: 60px auto;
+    padding: 1.75rem;
+  }
+}
+
+/* Mobile responsiveness */
 @media (max-width: 480px) {
   .auth-container {
-    margin-top: 40px; /* Reduce top margin on smaller screens */
+    max-width: 100%;
+    width: calc(100% - 2rem);
+    margin: 20px auto;
     padding: 1.5rem;
+    border-radius: 8px;
   }
 }
 .auth-container h2 {
@@ -226,19 +224,7 @@ export default {
 .auth-container button:hover {
   background: #217dbb;
 }
-.google-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff;
-  color: #444;
-  border: 1px solid #ddd;
-  margin-bottom: 1rem;
-}
-.google-btn img {
-  width: 20px;
-  height: 20px;
-}
+
 .error {
   color: #e74c3c;
   font-size: 0.95rem;
@@ -318,6 +304,96 @@ a {
 }
 a:hover {
   text-decoration: underline;
+}
+
+/* Additional mobile responsiveness for form elements */
+@media (max-width: 768px) {
+  .auth-container h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .auth-container input,
+  .auth-container button {
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .captcha-container {
+    margin: 1.25rem 0;
+  }
+
+  .captcha-label {
+    font-size: 0.85rem;
+  }
+
+  .captcha-text {
+    font-size: 1.1rem;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .captcha-input {
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-container h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .auth-container form {
+    gap: 0.9rem;
+  }
+
+  .auth-container input,
+  .auth-container button {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    border-radius: 4px;
+  }
+
+  .password-toggle-icon {
+    right: 8px;
+    font-size: 1.1rem;
+  }
+
+  .captcha-container {
+    margin: 1rem 0;
+  }
+
+  .captcha-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .captcha-display {
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .captcha-text {
+    font-size: 1rem;
+    padding: 0.5rem 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  .captcha-refresh {
+    padding: 0.4rem;
+  }
+
+  .captcha-input {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    border-radius: 4px;
+  }
+
+  .error {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
 }
 
 </style>

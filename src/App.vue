@@ -1,5 +1,8 @@
 <template>
   <div class="app">
+    <!-- Mobile backdrop -->
+    <div v-if="showSidebar && isMobile" class="mobile-backdrop" @click="toggleSidebar"></div>
+
     <!-- Main App Content -->
     <div class="app-wrapper" :class="{ 'sidebar-hidden': !showSidebar }">
       <nav class="sidebar" :class="{ 'show-sidebar': showSidebar }">
@@ -59,17 +62,10 @@
           <button class="menu-toggle" @click="toggleSidebar">
             <i :class="showSidebar ? 'fas fa-times' : 'fas fa-bars'"></i>
           </button>
-          <div class="search-bar">
-            <i class="fas fa-search"></i>
-            <input 
-              type="text" 
-              placeholder="Search products, orders, reports..." 
-              v-model="searchQuery"
-            >
-          </div>
+          
           
           <div class="user-menu">
-          <div class="user-profile" @click.stop="toggleUserMenu">
+            <div class="user-profile" @click.stop="toggleUserMenu">
               <div class="avatar">
                 {{ username ? username[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U') }}
               </div>
@@ -82,31 +78,31 @@
 
             <!-- User Menu Dropdown -->
             <div v-if="showUserMenu" class="user-dropdown" :class="{ show: showUserMenu }">
-          <div class="dropdown-header">
-            <div class="avatar-large">
-              {{ username ? username[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U') }}
-            </div>
-            <div class="user-info">
-              <p class="user-email">{{ username || user?.email || 'Guest User' }}</p>
-              <p class="user-role">{{ userRole || 'No Role Assigned' }}</p>
-            </div>
-          </div>
-          <div class="dropdown-divider"></div>
-          <div class="dropdown-menu-items">
-            <a href="#" class="menu-item">
-              <i class="fas fa-user"></i>
-              Profile
-            </a>
-            <router-link to="/guide-manual" class="menu-item">
-              <i class="fas fa-book"></i>
-              Guide Manual
-            </router-link>
-          </div>
-          <div class="dropdown-divider"></div>
-          <button @click="handleLogout" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-          </button>
+              <div class="dropdown-header">
+                <div class="avatar-large">
+                  {{ username ? username[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U') }}
+                </div>
+                <div class="user-info">
+                  <p class="user-email">{{ username || user?.email || 'Guest User' }}</p>
+                  <p class="user-role">{{ userRole || 'No Role Assigned' }}</p>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-menu-items">
+                <a href="#" class="menu-item">
+                  <i class="fas fa-user"></i>
+                  Profile
+                </a>
+                <router-link to="/guide-manual" class="menu-item">
+                  <i class="fas fa-book"></i>
+                  Guide Manual
+                </router-link>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button @click="handleLogout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </header>
@@ -118,7 +114,7 @@
 </template>
 
 <script>
-import { ref, onMounted, toRefs } from 'vue'
+import { ref, computed, onMounted, toRefs } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
 import { auth, db } from './firebase/config'
@@ -136,12 +132,15 @@ export default {
     const username = ref('')
     const userAvatar = ref('')
     const showUserMenu = ref(false)
-    const showSidebar = ref(true) // New state for sidebar visibility
+    const showSidebar = ref(window.innerWidth > 768) // Hide sidebar on mobile by default
     const showOrderProcessingSubMenu = ref(false) // New state for Order Processing submenu
     const showReportsSubMenu = ref(false) // New state for Reports submenu
 
     // Use store properties with toRefs to maintain reactivity
     const { user, userRole } = toRefs(authStore)
+
+    // Computed property for mobile detection
+    const isMobile = computed(() => window.innerWidth <= 768)
 
     const toggleUserMenu = () => {
       showUserMenu.value = !showUserMenu.value
@@ -234,6 +233,7 @@ export default {
       showSidebar,
       showOrderProcessingSubMenu,
       showReportsSubMenu,
+      isMobile,
       toggleUserMenu,
       // Removed: toggleNotifications,
       toggleSidebar,
@@ -431,32 +431,12 @@ body {
     margin-right: 15px;
   }
 
-.search-bar {
-  position: relative;
-  width: 300px;
-}
-
-.search-bar input {
-  width: 100%;
-  padding: 8px 35px 8px 15px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  font-size: 14px;
-}
-
-.search-bar i {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #7f8c8d;
-}
-
 .user-menu {
   display: flex;
   align-items: center;
   gap: 20px;
   position: relative;
+  margin-left: auto;
 }
 
 .notifications-btn {
@@ -728,10 +708,7 @@ body {
       padding: 12px 24px;
     }
 
-    .search-bar {
-      width: 250px;
-    }
-
+    
     .user-menu {
       gap: 15px;
     }
@@ -757,8 +734,12 @@ body {
 
   /* Mobile screens */
   @media (max-width: 768px) {
+    .app {
+      overflow-x: hidden;
+    }
+
     .app-wrapper {
-      flex-direction: column;
+      position: relative;
     }
 
     .sidebar {
@@ -766,66 +747,142 @@ body {
       top: 0;
       left: 0;
       height: 100vh;
-      width: 250px;
+      width: 280px;
       transform: translateX(-100%);
       transition: transform 0.3s ease-in-out;
       z-index: 1000;
-      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
     }
 
     .sidebar.show-sidebar {
       transform: translateX(0);
     }
 
-    .app-wrapper.sidebar-hidden .main-content {
-      margin-left: 0;
-      width: 100%;
-    }
-
     .menu-toggle {
-      display: block;
+      display: block !important;
     }
 
     .top-bar {
-      padding: 10px 20px;
+      padding: 12px 16px;
       flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 10px;
-      height: auto; /* Allow height to adjust based on content */
-    }
-
-    .search-bar {
-      order: 3; /* Move search bar below user menu on small screens */
-      width: 100%;
-      margin-top: 10px;
+      justify-content: flex-start;
+      gap: 12px;
+      height: auto;
+      min-height: 60px;
+      position: relative;
+      z-index: 95;
     }
 
     .user-menu {
+      order: 1;
+      margin-left: 0;
+      gap: 8px;
+    }
+
+    .user-profile {
+      gap: 8px;
+      padding: 6px 10px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+
+    .user-name {
+      font-size: 13px;
+    }
+
+    .user-role {
+      font-size: 11px;
+    }
+
+    .notifications-btn {
       order: 2;
       margin-left: auto;
     }
 
-    .notifications-btn {
-      order: 1;
-      margin-right: 0;
-    }
-
     .main-content {
-      width: 100%;
-      margin-left: 0;
+      width: 100% !important;
+      margin-left: 0 !important;
+      min-height: calc(100vh - 60px);
     }
 
     .content {
-      padding: 15px;
+      padding: 16px;
     }
 
-    .user-dropdown,
+    .user-dropdown {
+      right: 8px;
+      left: 8px;
+      width: auto;
+      max-width: none;
+      margin: 0;
+      min-width: 200px;
+      position: absolute;
+      top: 100%;
+      margin-top: 4px;
+    }
+
+    .dropdown-header {
+      padding: 16px;
+      gap: 12px;
+    }
+
+    .avatar-large {
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
+    }
+
+    .dropdown-header .user-email {
+      font-size: 14px;
+    }
+
+    .dropdown-header .user-role {
+      font-size: 11px;
+    }
+
+    .menu-item,
+    .logout-btn {
+      padding: 12px 16px;
+      font-size: 14px;
+      gap: 12px;
+    }
+
+    .menu-item i,
+    .logout-btn i {
+      font-size: 16px;
+      width: 20px;
+    }
+
     .notifications-dropdown {
-      right: 10px; /* Adjust position for smaller screens */
-      left: auto;
-      min-width: unset;
-      width: calc(100% - 20px); /* Take full width minus padding */
-      max-width: 350px; /* Limit max width */
+      right: 8px;
+      left: 8px;
+      width: auto;
+      max-width: none;
+      margin: 0;
+    }
+
+    /* Hide submenu arrows on mobile for cleaner look */
+    .submenu-arrow {
+      display: none;
+    }
+
+    /* Stack submenu items vertically */
+    .submenu {
+      position: static;
+      box-shadow: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .sub-link {
+      padding: 12px 20px;
+      margin: 0;
+      border-radius: 8px;
     }
   }
 
@@ -840,29 +897,29 @@ body {
       margin-right: 10px;
     }
 
-    .search-bar input {
-      padding: 6px 30px 6px 10px;
-      font-size: 13px;
-    }
+
 
     .user-profile {
-      gap: 8px;
-      padding: 5px 8px;
+      gap: 4px;
+      padding: 6px;
+      min-width: 40px;
+      justify-content: center;
     }
 
     .avatar {
       width: 32px;
       height: 32px;
-      font-size: 14px;
+      font-size: 16px; /* Slightly larger for better visibility */
     }
 
     .user-name,
     .user-role {
-      display: none; /* Hide text to save space */
+      display: none; /* Hide text to save space - POS style */
     }
 
     .user-profile i {
-      font-size: 10px;
+      font-size: 12px;
+      margin-left: 2px;
     }
 
     .notifications-btn {
@@ -907,5 +964,65 @@ body {
     .logout-btn i {
       font-size: 14px;
     }
+
+    /* Extra compact dropdown for small mobile screens */
+    .user-dropdown {
+      min-width: 180px;
+      border-radius: 8px;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 4px;
+      z-index: 9999;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .dropdown-header {
+      padding: 12px;
+      gap: 8px;
+    }
+
+    .avatar-large {
+      width: 36px;
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .dropdown-header .user-email {
+      font-size: 13px;
+    }
+
+    .dropdown-header .user-role {
+      font-size: 10px;
+    }
+
+    .dropdown-menu-items {
+      padding: 4px;
+    }
+
+    .menu-item,
+    .logout-btn {
+      padding: 10px 12px;
+      font-size: 13px;
+      gap: 8px;
+      margin: 0 4px;
+    }
+
+    .menu-item i,
+    .logout-btn i {
+      font-size: 14px;
+      width: 18px;
+    }
   }
+
+/* Mobile backdrop */
+.mobile-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
 </style>
