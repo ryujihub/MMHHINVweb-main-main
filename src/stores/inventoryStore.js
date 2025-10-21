@@ -81,46 +81,154 @@ export const useInventoryStore = defineStore('inventory', () => {
     // No notifications will be created since lowStockItems is empty
   }
 
-  // Fetch top selling items
-  const fetchTopSellingItems = async (timeRange = 'day') => {
+  // Fetch top selling items (supports custom date ranges)
+  const fetchTopSellingItems = async (timeRange = 'day', customStartDate = null, customEndDate = null) => {
     try {
       loading.value = true
-      const start = timeRange === 'week' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : startOfDay(new Date())
-      
+      let start, end
+
+      if (customStartDate && customEndDate) {
+        // Use custom date range
+        start = new Date(customStartDate)
+        end = new Date(customEndDate)
+        end.setHours(23, 59, 59, 999) // End of day
+      } else {
+        // Use predefined time range
+        end = new Date()
+        end.setHours(23, 59, 59, 999) // End of today
+
+        if (timeRange === 'week') {
+          start = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        } else {
+          start = startOfDay(new Date()) // Start of today
+        }
+      }
+
+      console.log('Fetching top selling items for period:', { start, end, timeRange })
+
       const q = query(
         collection(db, 'orders'),
         where('createdAt', '>=', start),
+        where('createdAt', '<=', end),
         orderBy('createdAt', 'desc')
       )
-      
+
       const snapshot = await getDocs(q)
       const orders = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
 
+      console.log('Found orders:', orders.length)
+
       // Calculate most ordered items
       const itemCounts = {}
+      const itemDetails = {} // Store item details for later matching
+
       orders.forEach(order => {
-        order.items?.forEach(item => {
-          itemCounts[item.productId] = (itemCounts[item.productId] || 0) + item.quantity
-        })
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach(item => {
+            // Try different possible field names for product ID
+            const productId = item.productId || item.id || item.productID
+            const productName = item.name || item.productName || 'Unknown Product'
+
+            if (productId && item.quantity) {
+              if (!itemCounts[productId]) {
+                itemCounts[productId] = 0
+                itemDetails[productId] = {
+                  name: productName,
+                  category: item.category || 'Uncategorized',
+                  price: item.price || 0
+                }
+              }
+              itemCounts[productId] += item.quantity
+            }
+          })
+        }
       })
 
+      console.log('Item counts:', itemCounts)
+      console.log('Item details:', itemDetails)
+      console.log('Available inventory items:', inventory.value.map(item => ({ id: item.id, name: item.name, category: item.category })))
+
       // Get top 5 items
-      const topItemIds = Object.entries(itemCounts)
+      const topItems = Object.entries(itemCounts)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 5)
-        .map(([id]) => id)
+        .map(([productId, quantitySold]) => {
+          // Try to find matching inventory item
+          let inventoryItem = null
+          if (inventory.value.length > 0) {
+            inventoryItem = inventory.value.find(inv =>
+              inv.id === productId ||
+              inv.productId === productId ||
+              inv.id === productId
+            )
+          }
 
-      topSellingItems.value = inventory.value
-        .filter(item => topItemIds.includes(item.id))
-        .map(item => ({
-          ...item,
-          quantitySold: itemCounts[item.id]
-        }))
+          if (inventoryItem) {
+            return {
+              ...inventoryItem,
+              quantitySold
+            }
+          } else {
+            // If not found in loaded inventory, fetch it directly
+            return {
+              id: productId,
+              quantitySold,
+              name: 'Unknown Product',
+              category: 'Uncategorized',
+              currentStock: 0
+            }
+          }
+        })
+
+      // Try to enrich unknown products by fetching fresh inventory data
+      if (topItems.some(item => item.name === 'Unknown Product')) {
+        try {
+          const inventorySnapshot = await getDocs(collection(db, 'inventory'))
+          const inventoryData = inventorySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+
+          topSellingItems.value = topItems.map(item => {
+            if (item.name === 'Unknown Product') {
+              // Try ID-based matching first
+              let inventoryItem = inventoryData.find(inv =>
+                inv.id === item.id ||
+                inv.productId === item.id
+              )
+
+              // If no ID match, try name-based matching using stored item details
+              if (!inventoryItem && itemDetails[item.id]) {
+                inventoryItem = inventoryData.find(inv =>
+                  inv.name === itemDetails[item.id].name ||
+                  (inv.name && inv.name.toLowerCase() === itemDetails[item.id].name.toLowerCase())
+                )
+              }
+
+              if (inventoryItem) {
+                return {
+                  ...inventoryItem,
+                  quantitySold: item.quantitySold
+                }
+              }
+            }
+            return item
+          })
+        } catch (error) {
+          console.error('Error fetching inventory for enrichment:', error)
+          topSellingItems.value = topItems
+        }
+      } else {
+        topSellingItems.value = topItems
+      }
+
+      console.log('Top selling items:', topSellingItems.value)
     } catch (error) {
       console.error('Error fetching top selling items:', error)
+      topSellingItems.value = []
     } finally {
       loading.value = false
     }
@@ -227,14 +335,31 @@ export const useInventoryStore = defineStore('inventory', () => {
       }));
 
     console.log("Fetching sales data from:", startDate, "to:", endDate);
+    console.log("Found orders for sales:", orders.length);
     const salesByDate = {};
       orders.forEach(order => {
-        const orderDate = order.createdAt.toDate().toLocaleDateString('en-US'); // Assuming createdAt is a Firestore Timestamp
+        let orderDate;
+        if (order.createdAt && order.createdAt.toDate) {
+          // Firestore Timestamp
+          orderDate = order.createdAt.toDate().toLocaleDateString('en-US');
+        } else if (order.createdAt instanceof Date) {
+          // JavaScript Date
+          orderDate = order.createdAt.toLocaleDateString('en-US');
+        } else if (typeof order.createdAt === 'string') {
+          // String date
+          orderDate = new Date(order.createdAt).toLocaleDateString('en-US');
+        } else {
+          console.warn("Unknown date format for order:", order.id, order.createdAt);
+          return;
+        }
+
         if (!salesByDate[orderDate]) {
           salesByDate[orderDate] = 0;
         }
-        salesByDate[orderDate] += order.total;
+        salesByDate[orderDate] += order.total || 0;
       });
+
+      console.log("Sales by date:", salesByDate);
 
       return Object.keys(salesByDate).map(date => ({
         date,
@@ -312,6 +437,38 @@ export const useInventoryStore = defineStore('inventory', () => {
     }
   }
 
+  // Remove sample orders from database
+  const removeSampleOrders = async () => {
+    try {
+      const q = query(collection(db, 'orders'))
+      const snapshot = await getDocs(q)
+      const sampleOrders = snapshot.docs.filter(doc => {
+        const orderId = doc.id.toLowerCase()
+        const data = doc.data()
+        return orderId.includes('sample') ||
+               (data.id && data.id.toLowerCase().includes('sample')) ||
+               (data.customer && data.customer.name && data.customer.name.toLowerCase().includes('sample'))
+      })
+
+      if (sampleOrders.length === 0) {
+        console.log('No sample orders found')
+        return 0
+      }
+
+      const batch = writeBatch(db)
+      sampleOrders.forEach(orderDoc => {
+        batch.delete(orderDoc.ref)
+      })
+
+      await batch.commit()
+      console.log(`Removed ${sampleOrders.length} sample orders`)
+      return sampleOrders.length
+    } catch (error) {
+      console.error('Error removing sample orders:', error)
+      throw error
+    }
+  }
+
   return {
     inventory,
     lowStockItems,
@@ -332,6 +489,7 @@ export const useInventoryStore = defineStore('inventory', () => {
     getProfitLoss,
     createStockAlert,
     fetchTopSellingItems,  // Added this function
-    getInventoryBreakdown
+    getInventoryBreakdown,
+    removeSampleOrders  // Added this function
   }
 })

@@ -54,6 +54,10 @@
               </router-link>
             </div>
           </div>
+          <router-link v-if="userRole === 'admin'" to="/settings" class="nav-link">
+            <i class="fas fa-cog"></i>
+            Settings
+          </router-link>
         </div>
       </nav>
 
@@ -119,6 +123,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
 import { auth, db } from './firebase/config'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
+import { useSettingsStore } from './stores/settingsStore'
 import { doc, getDoc } from 'firebase/firestore' // Removed collection, query, where, onSnapshot
 import { formatDistanceToNow } from 'date-fns'
 
@@ -177,8 +182,12 @@ export default {
     }
 
     onMounted(() => {
-      // Initialize auth store
+      // Initialize stores
       authStore.initializeAuth()
+
+      // Initialize settings store
+      const settingsStore = useSettingsStore()
+      settingsStore.initializeSettings()
       
       // Listen for auth state changes
       onAuthStateChanged(auth, async (firebaseUser) => {

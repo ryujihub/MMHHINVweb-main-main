@@ -4,6 +4,7 @@ import Login from '../views/Login.vue';
 import ProductCatalog from '../components/ProductCatalog.vue';
 import OrderProcessing from '../components/OrderProcessing.vue';
 import OrderManagement from '../components/OrderManagement.vue';
+import SettingsManagement from '../components/SettingsManagement.vue';
 import SalesReports from '../components/SalesReports.vue';
 import InventoryReports from '../components/InventoryReports.vue';
 import GuideManual from '../components/GuideManual.vue';
@@ -40,6 +41,12 @@ const routes = [
     name: 'OrderManagement',
     component: OrderManagement,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'SettingsManagement',
+    component: SettingsManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/reports/sales',

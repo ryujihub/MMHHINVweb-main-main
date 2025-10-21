@@ -149,11 +149,13 @@
 import { ref, computed } from 'vue'
 import ProductCard from './ProductCard.vue'
 import { useInventoryStore } from '../stores/inventoryStore'
+import { useSettingsStore } from '../stores/settingsStore'
 import { collection, addDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { useAuthStore } from '../stores/authStore'
 
 const inventoryStore = useInventoryStore()
+const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
 
 // Local state
@@ -170,9 +172,12 @@ const customerDetails = ref({
 })
 
 // Constants
-const deliveryFee = computed(() => 
-  customerDetails.value.deliveryOption === 'delivery' ? 150 : 0
-)
+const deliveryFee = computed(() => {
+  if (customerDetails.value.deliveryOption === 'pickup') {
+    return settingsStore.currentPickupFee
+  }
+  return settingsStore.currentDeliveryFee
+})
 
 // Computed properties
 const categories = computed(() => inventoryStore.categories)
