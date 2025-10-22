@@ -289,6 +289,7 @@ const processOrder = async () => {
       status: 'pending',
       createdAt: new Date(),
       createdBy: authStore.user?.uid || 'anonymous',
+      assignedTo: authStore.user?.uid || 'anonymous',
       processed: false
     }
 
