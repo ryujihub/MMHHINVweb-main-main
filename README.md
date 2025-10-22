@@ -7,11 +7,12 @@ The MMH Hardware Management System is a **centralized, always-accessible dashboa
 ## 🎯 Objectives and Scope and Delimitation
 
 **Objectives:**
-To provide a centralized web-based platform for efficient management, monitoring, and oversight of hardware inventory operations.
-To enable real-time tracking of stock levels, sales performance, and recent activities for informed decision-making.
-To streamline order processing and management, from creation to fulfillment, ensuring accurate record-keeping.
-To offer comprehensive reporting and analytics capabilities for in-depth insights into inventory health and sales trends.
-To implement a secure system with role-based access control, ensuring appropriate access levels for different user types.
+1. To develop a comprehensive web-based hardware inventory management system that enables efficient staff-managed order processing with real-time inventory tracking and reporting capabilities
+2. To provide a centralized platform for real-time inventory tracking, order management, and reporting capabilities
+3. To enable seamless order processing workflow from creation to fulfillment with accurate record-keeping
+4. To implement comprehensive reporting and analytics for informed decision-making and business insights
+5. To create a user-friendly dashboard interface with role-based access control for different user types
+6. To develop a responsive web application that provides accessibility across different devices and screen sizes
 
 **Scope and Delimitation:**
 The Metro Manila Hills Hardware Management System is a web application focused on administrative functions for hardware inventory.

@@ -507,39 +507,138 @@ const refreshData = async () => {
 
 
 const exportToPdf = () => {
-  const doc = new jsPDF()
-  
-  doc.setFontSize(20)
-  doc.text('Sales Report', 20, 20)
-  
-  doc.setFontSize(12)
-  doc.text(`Period: ${formatDateRange.value}`, 20, 30)
-
-  doc.setFontSize(16)
-  doc.text('Summary', 20, 45)
-  
-  doc.setFontSize(12)
-  doc.text([
-    `Total Orders: ${totalOrders.value}`,
-    `Total Revenue: ₱${formatPrice(totalRevenue.value)}`,
-    `Average Order Value: ₱${formatPrice(averageOrderValue.value)}`
-  ], 20, 55)
-
-  doc.setFontSize(16)
-  doc.text('Best Selling Products', 20, 85)
-
-  autoTable(doc, {
-    startY: 90,
-    head: [['Product', 'Category', 'Quantity', 'Revenue']],
-    body: topProducts.value.map(product => [
-      product.name,
-      product.category,
-      product.quantitySold,
-      `₱${formatPrice(product.revenue)}`
-    ])
+  // Create PDF in landscape orientation with better settings
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
+    compress: true
   })
 
-  doc.save(`sales_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`)
+  // Set default font
+  doc.setFont('helvetica')
+
+  // Header section with better styling
+  doc.setFontSize(28)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(33, 37, 41) // Dark gray color
+  doc.text('MMH HARDWARE INVENTORY', 20, 25)
+
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(59, 130, 246) // Blue color
+  doc.text('Sales Report', 20, 35)
+
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(108, 117, 125) // Medium gray
+  doc.text(`Report Period: ${formatDateRange.value}`, 20, 45)
+
+  // Summary section with professional layout
+  let currentY = 60
+
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(33, 37, 41)
+  doc.text('EXECUTIVE SUMMARY', 20, currentY)
+
+  currentY += 15
+
+  // Summary metrics in a clean layout
+  const summaryData = [
+    { label: 'Total Orders', value: totalOrders.value.toString(), icon: '' },
+    { label: 'Total Revenue', value: `PHP ${formatPrice(totalRevenue.value)}`, icon: '' },
+    { label: 'Average Order Value', value: `PHP ${formatPrice(averageOrderValue.value)}`, icon: '' }
+  ]
+
+  summaryData.forEach((item, index) => {
+    const x = 20 + (index * 90)
+
+    // Label only (no icons to avoid encoding issues)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(52, 58, 64)
+    doc.text(item.label, x, currentY + 3)
+
+    // Value
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(33, 37, 41)
+    doc.text(item.value, x, currentY + 13)
+  })
+
+  // Best Selling Products section
+  currentY = 100
+
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(33, 37, 41)
+  doc.text('TOP PERFORMING PRODUCTS', 20, currentY)
+
+  currentY += 10
+
+  // Products table with enhanced styling
+  autoTable(doc, {
+    startY: currentY,
+    head: [['#', 'Product Name', 'Qty Sold', 'Revenue']],
+    body: topProducts.value.map((product, index) => [
+      (index + 1).toString(),
+      (product.name || 'Unknown Product').toUpperCase(),
+      product.quantitySold.toString(),
+      `PHP ${formatPrice(product.revenue)}`
+    ]),
+    styles: {
+      font: 'helvetica',
+      fontSize: 9,
+      cellPadding: 4,
+      lineColor: [222, 226, 230],
+      lineWidth: 0.5,
+    },
+    headStyles: {
+      fillColor: [33, 37, 41], // Dark header
+      textColor: 255,
+      fontSize: 10,
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    bodyStyles: {
+      fontSize: 9,
+      textColor: [33, 37, 41]
+    },
+    columnStyles: {
+      0: { cellWidth: 15, halign: 'center', fontStyle: 'bold' }, // Rank
+      1: { cellWidth: 90, fontStyle: 'bold' }, // Product name
+      2: { cellWidth: 25, halign: 'center' }, // Quantity
+      3: { cellWidth: 35, halign: 'right', fontStyle: 'bold' } // Revenue
+    },
+    alternateRowStyles: {
+      fillColor: [248, 249, 250] // Light gray for alternate rows
+    },
+    margin: { top: currentY, right: 15, bottom: 25, left: 15 },
+    tableWidth: 'wrap'
+  })
+
+  // Footer section
+  const pageHeight = doc.internal.pageSize.height
+  const pageWidth = doc.internal.pageSize.width
+
+  // Footer line
+  doc.setDrawColor(222, 226, 230)
+  doc.setLineWidth(0.5)
+  doc.line(20, pageHeight - 20, pageWidth - 20, pageHeight - 20)
+
+  // Footer text
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(108, 117, 125)
+
+  const generationDate = format(new Date(), 'MMM d, yyyy - h:mm a')
+  doc.text(`Generated on: ${generationDate}`, 20, pageHeight - 12)
+  doc.text('MMH Hardware Inventory Management System', pageWidth - 20, pageHeight - 12, { align: 'right' })
+
+  // Save with a cleaner filename
+  const fileDate = format(new Date(), 'yyyy-MM-dd')
+  doc.save(`MMH_Sales_Report_${fileDate}.pdf`)
 }
 
 // Watchers
