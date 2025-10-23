@@ -90,6 +90,11 @@
 
       </div>
 
+      <!-- Check-in/Check-out Section -->
+      <div class="check-in-out-section" v-if="user">
+        <CheckInOutWidget />
+      </div>
+
       <!-- Top Selling Items and Inventory Breakdown -->
       <div class="top-section-grid">
         <div class="section-card">
@@ -179,15 +184,18 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/authStore'
 import { useInventoryStore } from '../stores/inventoryStore'
+import { useCheckInOutStore } from '../stores/checkInOutStore'
 import { formatDistanceToNow, subDays } from 'date-fns'
 
 import { db } from '../firebase/config'
 import SalesChart from './SalesChart.vue'
 import InventoryChart from './InventoryChart.vue'
+import CheckInOutWidget from './CheckInOutWidget.vue'
 
 // Store initialization
 const authStore = useAuthStore()
 const inventoryStore = useInventoryStore()
+const checkInOutStore = useCheckInOutStore()
 
 // Local state
 const selectedPeriod = ref('Today');
@@ -458,7 +466,9 @@ onMounted(async () => {
     startDate.value = todayStr;
     endDate.value = todayStr;
 
+    // Initialize stores
     inventoryStore.initializeInventoryListener();
+    await checkInOutStore.initializeCheckInStatus();
 
     // Wait a bit for inventory to load before fetching top selling items
     setTimeout(async () => {
@@ -1172,5 +1182,24 @@ onMounted(async () => {
 
 .demo-btn:hover {
   background: #059669;
+}
+
+/* Check-in/Check-out Section */
+.check-in-out-section {
+  margin-bottom: 2rem;
+}
+
+.check-in-out-section .section-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.check-in-out-section .section-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
 }
 </style>

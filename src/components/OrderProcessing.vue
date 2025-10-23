@@ -1,8 +1,20 @@
 <template>
   <div class="order-processing">
     <div class="page-header">
-      <h1>New Order</h1>
-      <p class="subtitle">Create and process new orders</p>
+      <div class="header-content">
+        <h1>New Order</h1>
+        <p class="subtitle">Create and process new orders</p>
+      </div>
+      <div class="check-in-status" v-if="authStore.user">
+        <div class="status-indicator" :class="{ 'checked-in': isCheckedIn, 'checked-out': !isCheckedIn }">
+          <i :class="isCheckedIn ? 'fas fa-user-check' : 'fas fa-user-clock'"></i>
+          <span>{{ isCheckedIn ? 'Checked In' : 'Checked Out' }}</span>
+        </div>
+        <div v-if="!isCheckedIn" class="check-in-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>You must check in to process orders</span>
+        </div>
+      </div>
     </div>
 
     <div class="order-container">
@@ -131,7 +143,7 @@
               </select>
             </div>
 
-            <button type="submit" class="submit-btn">Process Order</button>
+            <button type="submit" class="submit-btn" :disabled="!isCheckedIn">Process Order</button>
           </form>
         </transition>
       </aside>
@@ -139,23 +151,25 @@
 
     <div class="mobile-bar" v-if="cart.length">
       <div class="mobile-total">Total: ₱{{ formatPrice(cartTotal) }}</div>
-      <button class="process-btn" @click="showCustomerForm = true">Checkout</button>
+      <button class="process-btn" @click="showCustomerForm = true" :disabled="!isCheckedIn">Checkout</button>
     </div>
   </div>
 </template>
 
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import ProductCard from './ProductCard.vue'
 import { useInventoryStore } from '../stores/inventoryStore'
 import { useSettingsStore } from '../stores/settingsStore'
+import { useCheckInOutStore } from '../stores/checkInOutStore'
 import { collection, addDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { useAuthStore } from '../stores/authStore'
 
 const inventoryStore = useInventoryStore()
 const settingsStore = useSettingsStore()
+const checkInOutStore = useCheckInOutStore()
 const authStore = useAuthStore()
 
 // Local state
@@ -208,6 +222,9 @@ const cartSubtotal = computed(() => {
 })
 
 const cartTotal = computed(() => cartSubtotal.value + deliveryFee.value)
+
+// Check-in status
+const { isCheckedIn, canAccessOrderProcess } = checkInOutStore
 
 // Methods
 const formatPrice = (price) => {
@@ -279,6 +296,12 @@ const clearCart = () => {
 }
 
 const processOrder = async () => {
+  // Check if user is checked in
+  if (!isCheckedIn.value) {
+    alert('You must check in before processing orders. Please check in from the dashboard.')
+    return
+  }
+
   try {
     const orderData = {
       items: cart.value,
@@ -433,6 +456,13 @@ const printOrderSlip = (orderId, orderData) => {
     alert('Error printing order slip. Please try again or save the order details manually.')
   }
 }
+
+// Initialize check-in status
+onMounted(async () => {
+  if (authStore.user) {
+    await checkInOutStore.initializeCheckInStatus()
+  }
+})
 </script>
 
 <style scoped>
@@ -442,8 +472,72 @@ const printOrderSlip = (orderId, orderData) => {
   margin: 0 auto;
 }
 
-.page-header h1 {
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-content h1 {
   margin: 0 0 0.25rem 0;
+  color: #1a202c;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.header-content .subtitle {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.check-in-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-indicator.checked-in {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-indicator.checked-out {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.check-in-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  border: 1px solid #f59e0b;
+}
+
+.submit-btn:disabled,
+.process-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #9ca3af !important;
 }
 
 .order-container {
