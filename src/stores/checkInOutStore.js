@@ -47,17 +47,10 @@ export const useCheckInOutStore = defineStore('checkInOut', () => {
       )
 
       const sessionsSnapshot = await getDocs(sessionsQuery)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
 
-      // Filter for today's active sessions in JavaScript
-      const todaySessions = sessionsSnapshot.docs
+      // Filter for active sessions (checked in but not checked out)
+      const activeSessions = sessionsSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(session => {
-          if (!session.date) return false
-          const sessionDate = session.date.toDate ? session.date.toDate() : new Date(session.date)
-          return sessionDate >= today && sessionDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        })
         .filter(session => session.checkInTime && !session.checkOutTime) // Only active sessions
         .sort((a, b) => {
           const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
@@ -65,14 +58,25 @@ export const useCheckInOutStore = defineStore('checkInOut', () => {
           return dateB - dateA
         })
 
-      if (todaySessions.length > 0) {
-        const activeSession = todaySessions[0] // Most recent active session
+      if (activeSessions.length > 0) {
+        const activeSession = activeSessions[0] // Most recent active session
         currentSession.value = activeSession
         isCheckedIn.value = true
         checkInTime.value = activeSession.checkInTime?.toDate ? activeSession.checkInTime.toDate() : new Date(activeSession.checkInTime)
+      } else {
+        // No active session, ensure state is reset
+        currentSession.value = null
+        isCheckedIn.value = false
+        checkInTime.value = null
+        checkOutTime.value = null
       }
     } catch (error) {
       console.error('Error initializing check-in status:', error)
+      // Reset state on error
+      currentSession.value = null
+      isCheckedIn.value = false
+      checkInTime.value = null
+      checkOutTime.value = null
     } finally {
       loading.value = false
     }
@@ -82,6 +86,10 @@ export const useCheckInOutStore = defineStore('checkInOut', () => {
   const checkIn = async () => {
     if (!authStore.user) {
       throw new Error('User must be authenticated to check in')
+    }
+
+    if (!authStore.isStaff) {
+      throw new Error('Only staff members can check in')
     }
 
     if (isCheckedIn.value) {
@@ -126,6 +134,10 @@ export const useCheckInOutStore = defineStore('checkInOut', () => {
   const checkOut = async () => {
     if (!authStore.user) {
       throw new Error('User must be authenticated to check out')
+    }
+
+    if (!authStore.isStaff) {
+      throw new Error('Only staff members can check out')
     }
 
     if (!isCheckedIn.value) {

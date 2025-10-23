@@ -27,10 +27,18 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = firebaseUser
           console.log('Auth state changed: User logged in', firebaseUser.email);
           await fetchUserRole(firebaseUser.uid);
+          // Initialize check-in status after user role is fetched
+          const { useCheckInOutStore } = await import('./checkInOutStore')
+          const checkInOutStore = useCheckInOutStore()
+          await checkInOutStore.initializeCheckInStatus()
         } else {
           user.value = null
           userRole.value = 'staff' // Default to staff if not logged in
           console.log('Auth state changed: User logged out or no user');
+          // Reset check-in status on logout
+          const { useCheckInOutStore } = await import('./checkInOutStore')
+          const checkInOutStore = useCheckInOutStore()
+          checkInOutStore.resetState()
         }
       } finally {
         loading.value = false

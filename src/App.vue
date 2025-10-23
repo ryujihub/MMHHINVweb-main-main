@@ -7,8 +7,7 @@
     <div class="app-wrapper" :class="{ 'sidebar-hidden': !showSidebar }">
       <nav class="sidebar" :class="{ 'show-sidebar': showSidebar }">
         <div class="sidebar-header">
-          <h1>MMH Hardware</h1>
-          <p class="subtitle">Management System</p>
+          <h1>Metro Manila Hills Hardware</h1>
         </div>
         
         <div class="nav-links">

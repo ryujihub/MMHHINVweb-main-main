@@ -21,7 +21,7 @@
             <span>Duration: {{ formattedDuration }}</span>
           </div>
         </div>
-        <button @click="handleCheckOut" class="check-out-btn" :disabled="loading">
+        <button @click="handleCheckOut" class="check-out-btn" :disabled="loading.value">
           <i class="fas fa-sign-out-alt"></i>
           Check Out
         </button>
@@ -29,7 +29,7 @@
 
       <!-- Check In Form -->
       <div v-else class="check-in-form">
-        <button @click="handleCheckIn" class="check-in-btn" :disabled="loading">
+        <button @click="handleCheckIn" class="check-in-btn" :disabled="loading.value">
           <i class="fas fa-sign-in-alt"></i>
           Check In
         </button>
@@ -58,7 +58,7 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div v-if="loading" class="loading-overlay">
+    <div v-if="loading.value" class="loading-overlay">
       <i class="fas fa-spinner fa-spin"></i>
     </div>
   </div>
@@ -72,14 +72,15 @@ import { useAuthStore } from '../stores/authStore'
 const checkInOutStore = useCheckInOutStore()
 const authStore = useAuthStore()
 
-// Local state
-const loading = ref(false)
-
 // Computed
-const { isCheckedIn, checkInTime, formattedDuration, sessions, loading: storeLoading } = checkInOutStore
+const isCheckedIn = computed(() => checkInOutStore.isCheckedIn)
+const checkInTime = computed(() => checkInOutStore.checkInTime)
+const formattedDuration = computed(() => checkInOutStore.formattedDuration)
+const sessions = computed(() => checkInOutStore.sessions)
+const loading = computed(() => checkInOutStore.loading)
 
 const recentSessions = computed(() => {
-  return sessions.slice(0, 5) // Show last 5 sessions
+  return sessions.value.slice(0, 5) // Show last 5 sessions
 })
 
 // Methods
@@ -109,34 +110,28 @@ const getSessionDuration = (session) => {
 }
 
 const handleCheckIn = async () => {
-  loading.value = true
   try {
     await checkInOutStore.checkIn()
     // Refresh sessions history
     await checkInOutStore.getSessionsHistory(7)
   } catch (error) {
     alert(`Check-in failed: ${error.message}`)
-  } finally {
-    loading.value = false
   }
 }
 
 const handleCheckOut = async () => {
-  loading.value = true
   try {
     await checkInOutStore.checkOut()
     // Refresh sessions history
     await checkInOutStore.getSessionsHistory(7)
   } catch (error) {
     alert(`Check-out failed: ${error.message}`)
-  } finally {
-    loading.value = false
   }
 }
 
 // Initialize
 onMounted(async () => {
-  await checkInOutStore.initializeCheckInStatus()
+  // Check-in status is now initialized in authStore
   await checkInOutStore.getSessionsHistory(7)
 })
 </script>

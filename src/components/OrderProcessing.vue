@@ -224,7 +224,8 @@ const cartSubtotal = computed(() => {
 const cartTotal = computed(() => cartSubtotal.value + deliveryFee.value)
 
 // Check-in status
-const { isCheckedIn, canAccessOrderProcess } = checkInOutStore
+const isCheckedIn = computed(() => checkInOutStore.isCheckedIn)
+const canAccessOrderProcess = computed(() => checkInOutStore.canAccessOrderProcess)
 
 // Methods
 const formatPrice = (price) => {
@@ -459,9 +460,7 @@ const printOrderSlip = (orderId, orderData) => {
 
 // Initialize check-in status
 onMounted(async () => {
-  if (authStore.user) {
-    await checkInOutStore.initializeCheckInStatus()
-  }
+  // Check-in status is now initialized in authStore
 })
 </script>
 
