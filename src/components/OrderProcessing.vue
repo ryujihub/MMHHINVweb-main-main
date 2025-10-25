@@ -67,7 +67,9 @@
         <div class="cart-items" v-if="cart.length">
           <div v-for="item in cart" :key="item.id" class="cart-item">
             <div class="item-left">
-              <div class="item-thumb">📦</div>
+              <div class="item-thumb">
+                <img :src="item.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxMEMyNi4wNzUgMTAgMjAgMTYuNzUgMjAgMjVDMjAgMTYuNzUgMTMuOTI1IDEwIDIwIDEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjI1IiByPSIyIiBmaWxsPSIjNkI3MjgwIi8+Cjwvc3ZnPgo='" :alt="item.name" />
+              </div>
               <div class="item-info">
                 <h4>{{ item.name }}</h4>
                 <div class="item-details">₱{{ formatPrice(item.price) }}</div>
@@ -249,7 +251,8 @@ const addToCart = (product) => {
       id: product.id,
       name: product.name,
       price: product.price,
-      quantity: quantity
+      quantity: quantity,
+      image: product.image
     })
   }
 
@@ -652,7 +655,22 @@ onMounted(async () => {
 
 .cart-item { display:flex; justify-content:space-between; gap:0.5rem; padding:0.6rem 0; border-bottom:1px solid #f1f5f9 }
 .item-left { display:flex; gap:0.6rem; align-items:center }
-.item-thumb { font-size:1.2rem }
+.item-thumb {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.item-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
 .item-info h4 { margin:0; font-size:0.95rem }
 .item-details { color:#6b7280; font-size:0.85rem }
 

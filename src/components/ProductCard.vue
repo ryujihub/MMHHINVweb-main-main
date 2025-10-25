@@ -1,5 +1,8 @@
 <template>
   <div class="product-card" @click="addToCart">
+    <div class="product-image">
+      <img :src="product.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMCAxNUM0Mi4xNSAxNSAzMCAyNS41IDMwIDM4QzMwIDI1LjUgMTcuODUgMTUgMzAgMTVaIiBmaWxsPSIjOUNBM0FGIi8+CjxjaXJjbGUgY3g9IjMwIiBjeT0iMzUiIHI9IjMiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+Cg=='" :alt="product.name" />
+    </div>
     <div class="product-info">
       <h3 class="product-name">{{ product.name }}</h3>
       <div class="product-price">₱{{ product.price }}</div>
@@ -43,8 +46,25 @@ export default {
   border: 1px solid #e2e8f0;
   transition: all 0.2s;
   cursor: pointer;
-  min-height: 80px;
+  min-height: 120px;
   max-width: 120px;
+}
+
+.product-image {
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.product-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
 }
 
 .product-card:hover {
@@ -90,9 +110,13 @@ export default {
 @media (max-width: 768px) {
   .product-card {
     padding: 0.4rem;
-    min-height: 70px;
+    min-height: 110px;
     max-width: 100px;
     gap: 0.2rem;
+  }
+
+  .product-image {
+    height: 50px;
   }
 
   .product-name {
@@ -114,9 +138,13 @@ export default {
 @media (max-width: 480px) {
   .product-card {
     padding: 0.35rem;
-    min-height: 60px;
+    min-height: 100px;
     max-width: 90px;
     gap: 0.15rem;
+  }
+
+  .product-image {
+    height: 45px;
   }
 
   .product-name {

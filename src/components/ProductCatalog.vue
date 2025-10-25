@@ -30,6 +30,9 @@
         class="product-card"
         :class="{ 'low-stock': product.currentStock <= LOW_STOCK_THRESHOLD }"
       >
+        <div class="product-image">
+          <img :src="product.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNSAyNUMzNSAyNSAyNSAzNSAyNSAzNUMyNSA0MCAzMCA0MCA0MCA0MEM1MCA0MCA1MCAzNSA1MCAyNUM0MCAyNSAzMCAyNSAyNSAyNVoiIGZpbGw9IiM5Q0EzQUYiLz4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0NSIgcj0iNCIgZmlsbD0iIzZCNzI4MCIvPgo8L3N2Zz4K'" :alt="product.name" />
+        </div>
         <div class="product-header">
           <h3>{{ product.name }}</h3>
           <span class="category-badge">{{ product.category }}</span>
@@ -194,6 +197,26 @@ const filterProducts = () => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-image {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  margin-bottom: 1rem;
+}
+
+.product-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
 }
 
 .product-card.low-stock {
