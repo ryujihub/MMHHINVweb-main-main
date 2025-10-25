@@ -204,8 +204,9 @@ onMounted(async () => {
 }
 
 .check-in-btn, .check-out-btn {
-  width: 100%;
-  padding: 0.75rem 1rem;
+  width: auto;
+  min-width: 120px;
+  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 8px;
   font-weight: 500;
@@ -329,6 +330,11 @@ onMounted(async () => {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
+  }
+
+  .check-in-btn, .check-out-btn {
+    width: 100%;
+    min-width: auto;
   }
 }
 </style>

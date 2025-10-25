@@ -12,36 +12,44 @@
           <p class="subtitle">Overview of your hardware inventory</p>
         </div>
         <div class="date-filter">
-          <div class="date-range-selector">
-            <div class="date-inputs">
-              <div class="date-input-group">
-                <label>From:</label>
+          <div class="date-inputs-inline">
+            <div class="date-input-group">
+              <label for="start-date">From:</label>
+              <div class="date-input-wrapper">
                 <input
+                  id="start-date"
                   type="date"
                   v-model="startDate"
-                  class="date-input"
+                  class="date-input-compact"
                   :max="endDate"
                   @change="updateDateRange"
                 />
+                <i class="fas fa-calendar-alt date-icon"></i>
               </div>
-              <div class="date-input-group">
-                <label>To:</label>
+            </div>
+            <div class="date-input-group">
+              <label for="end-date">To:</label>
+              <div class="date-input-wrapper">
                 <input
+                  id="end-date"
                   type="date"
                   v-model="endDate"
-                  class="date-input"
+                  class="date-input-compact"
                   :min="startDate"
                   :max="today"
                   @change="updateDateRange"
                 />
+                <i class="fas fa-calendar-alt date-icon"></i>
               </div>
             </div>
+          </div>
 
-            <div class="quick-filters">
+          <div class="quick-filters-inline">
+            <div class="filter-buttons-compact">
               <button
                 v-for="filter in quickFilters"
                 :key="filter.label"
-                :class="['filter-btn', { active: isActiveFilter(filter) }]"
+                :class="['filter-btn-compact', { active: isActiveFilter(filter) }]"
                 @click="applyQuickFilter(filter)"
               >
                 {{ filter.label }}
@@ -527,18 +535,31 @@ onMounted(async () => {
 
 .date-filter {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   background: #fff;
-  padding: 0.25rem;
-  border-radius: 8px;
+  padding: 0.5rem;
+  border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  align-items: center;
+}
+
+.date-inputs-inline {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.quick-filters-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Date Range Selector Styles */
 .date-range-selector {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .date-inputs {
@@ -559,22 +580,52 @@ onMounted(async () => {
   color: #4a5568;
 }
 
-.date-input {
-  padding: 0.5rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  background: white;
-  min-width: 140px;
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.date-input-compact {
+  padding: 0.4rem 2rem 0.4rem 0.6rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  background: var(--surface-primary);
+  min-width: 110px;
+  max-width: 130px;
+  transition: all var(--transition-fast);
 }
 
 .date-input:focus {
   outline: none;
-  border-color: #3182ce;
-  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-icon {
+  position: absolute;
+  right: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  pointer-events: none;
 }
 
 .quick-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.filter-buttons {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
@@ -593,8 +644,32 @@ onMounted(async () => {
 }
 
 .filter-btn.active {
-  background: #3498db;
+  background: var(--accent-color);
   color: white;
+}
+
+.filter-btn-compact {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  font-size: 0.8rem;
+  border: 1px solid var(--border-primary);
+}
+
+.filter-btn-compact:hover {
+  background: var(--background-secondary);
+  border-color: var(--accent-color);
+}
+
+.filter-btn-compact.active {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
 }
 
 .stats-grid {

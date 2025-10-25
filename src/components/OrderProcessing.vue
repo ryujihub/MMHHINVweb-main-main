@@ -151,10 +151,7 @@
       </aside>
     </div>
 
-    <div class="mobile-bar" v-if="cart.length">
-      <div class="mobile-total">Total: ₱{{ formatPrice(cartTotal) }}</div>
-      <button class="process-btn" @click="showCustomerForm = true" :disabled="!isCheckedIn">Checkout</button>
-    </div>
+    
   </div>
 </template>
 
@@ -469,9 +466,12 @@ onMounted(async () => {
 
 <style scoped>
 .order-processing {
-  padding: 1.25rem;
-  max-width: 1200px;
+  padding: var(--space-6);
+  max-width: 1600px;
   margin: 0 auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--background-primary);
+  min-height: 100vh;
 }
 
 .page-header {
@@ -592,17 +592,17 @@ onMounted(async () => {
 }
 
 .category-select-wrapper:hover {
-  border-color: #0b63ff;
-  box-shadow: 0 2px 8px rgba(11, 99, 255, 0.12);
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
 }
 
 .category-select-wrapper:focus-within {
-  border-color: #0b63ff;
-  box-shadow: 0 0 0 2px rgba(11, 99, 255, 0.1);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .category-select-wrapper i:first-child {
-  color: #0b63ff;
+  color: var(--accent-color);
   margin-right: 0.5rem;
   font-size: 0.9rem;
 }
@@ -633,7 +633,7 @@ onMounted(async () => {
 }
 
 .category-select-wrapper:hover .select-arrow {
-  color: #0b63ff;
+  color: var(--primary-color);
 }
 
 .category-select:focus + .select-arrow {
@@ -690,7 +690,7 @@ onMounted(async () => {
 .form-group label { display:block; font-size:0.85rem; color:#374151; margin-bottom:0.25rem }
 .form-group input, .form-group select, .form-group textarea { width:100%; padding:0.5rem; border:1px solid #e6e9ef; border-radius:8px }
 .form-group.two-col { display:flex; gap:0.5rem }
-.submit-btn { width:100%; padding:0.7rem; background:#0b63ff; color:white; border:none; border-radius:8px; margin-top:0.5rem }
+.submit-btn { width:100%; padding:0.7rem; background:var(--accent-color); color:white; border:none; border-radius:8px; margin-top:0.5rem }
 
 .mobile-bar { display:none }
 
@@ -706,7 +706,7 @@ onMounted(async () => {
   }
   .toolbar { flex-direction:column; align-items:stretch }
   .mobile-bar { display:flex; position:fixed; bottom:12px; left:12px; right:12px; gap:0.6rem; background:#ffffff; padding:0.6rem; border-radius:10px; box-shadow:0 8px 26px rgba(20,20,40,0.12); align-items:center; justify-content:space-between }
-  .process-btn { background:#0b63ff; color:white; padding:0.5rem 0.8rem; border-radius:8px; border:none }
+  .process-btn { background:var(--accent-color); color:white; padding:0.5rem 0.8rem; border-radius:8px; border:none }
 }
 
 .slide-enter-active, .slide-leave-active { transition: all 220ms ease }

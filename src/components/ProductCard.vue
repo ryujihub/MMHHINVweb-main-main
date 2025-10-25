@@ -35,42 +35,74 @@ export default {
 
 <style scoped>
 .product-card {
-  background: white;
-  border-radius: 6px;
-  padding: 0.5rem;
+  background: var(--surface-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.3rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-primary);
+  transition: all var(--transition-normal);
   cursor: pointer;
-  min-height: 120px;
-  max-width: 120px;
+  min-height: 160px;
+  max-width: 160px;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.03) 0%, rgba(14, 165, 233, 0.03) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  border-radius: var(--radius-lg);
 }
 
 .product-image {
   width: 100%;
-  height: 60px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 4px;
-  background: #f8fafc;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--background-secondary) 0%, var(--surface-tertiary) 100%);
+  transition: all var(--transition-normal);
+  position: relative;
 }
 
 .product-image img {
   max-width: 100%;
   max-height: 100%;
   object-fit: cover;
+  transition: transform var(--transition-normal);
+  border-radius: var(--radius-md);
 }
 
 .product-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transform: translateY(-2px);
-  border-color: #3b82f6;
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--primary-light);
+}
+
+.product-card:hover::before {
+  opacity: 1;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.08);
+  box-shadow: var(--shadow-md);
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.15);
 }
 
 .product-card.out-of-stock {
@@ -93,7 +125,7 @@ export default {
 .product-price {
   font-size: 1rem;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--accent-color);
   margin-top: 0.25rem;
 }
 
@@ -109,57 +141,67 @@ export default {
 /* Mobile POS-style responsive adjustments */
 @media (max-width: 768px) {
   .product-card {
-    padding: 0.4rem;
-    min-height: 110px;
-    max-width: 100px;
-    gap: 0.2rem;
+    padding: 0.6rem;
+    min-height: 130px;
+    max-width: 120px;
+    gap: 0.4rem;
+    border-radius: 6px;
   }
 
   .product-image {
-    height: 50px;
+    height: 60px;
+    border-radius: 4px;
   }
 
   .product-name {
-    font-size: 0.7rem;
-    line-height: 1.1;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    font-weight: 600;
   }
 
   .product-price {
-    font-size: 0.8rem;
-    margin-top: 0.15rem;
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+    font-weight: 700;
   }
 
   .product-stock {
-    font-size: 0.6rem;
-    padding: 1px 3px;
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    border-radius: 3px;
   }
 }
 
 @media (max-width: 480px) {
   .product-card {
-    padding: 0.35rem;
-    min-height: 100px;
-    max-width: 90px;
-    gap: 0.15rem;
+    padding: 0.5rem;
+    min-height: 120px;
+    max-width: 110px;
+    gap: 0.3rem;
+    border-radius: 6px;
   }
 
   .product-image {
-    height: 45px;
+    height: 55px;
+    border-radius: 4px;
   }
 
   .product-name {
-    font-size: 0.65rem;
-    line-height: 1;
+    font-size: 0.75rem;
+    line-height: 1.1;
+    font-weight: 600;
   }
 
   .product-price {
-    font-size: 0.75rem;
-    margin-top: 0.1rem;
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
+    font-weight: 700;
   }
 
   .product-stock {
-    font-size: 0.55rem;
-    padding: 0.5px 2px;
+    font-size: 0.65rem;
+    padding: 1px 3px;
+    border-radius: 3px;
   }
 }
 </style>
