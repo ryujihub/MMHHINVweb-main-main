@@ -57,101 +57,167 @@
       <!-- Order Cart -->
       <aside class="order-cart">
         <div class="cart-header">
-          <h2>Order Cart</h2>
+          <div class="cart-title">
+            <h2>Order Cart</h2>
+            <span class="cart-count" v-if="cart.length">{{ cart.length }} item{{ cart.length > 1 ? 's' : '' }}</span>
+          </div>
           <div class="cart-actions">
-            <button @click="clearCart" class="clear-btn" v-if="cart.length">Clear</button>
-            <button class="details-btn" @click="showCustomerForm = !showCustomerForm">Customer Details</button>
+            <button @click="clearCart" class="clear-btn" v-if="cart.length">
+              <i class="fas fa-trash"></i>
+              Clear
+            </button>
+            <button class="details-btn" @click="showCustomerForm = !showCustomerForm">
+              <i class="fas fa-user"></i>
+              Customer Details
+            </button>
           </div>
         </div>
 
-        <div class="cart-items" v-if="cart.length">
-          <div v-for="item in cart" :key="item.id" class="cart-item">
-            <div class="item-left">
-              <div class="item-thumb">
-                <img :src="item.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxMEMyNi4wNzUgMTAgMjAgMTYuNzUgMjAgMjVDMjAgMTYuNzUgMTMuOTI1IDEwIDIwIDEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjI1IiByPSIyIiBmaWxsPSIjNkI3MjgwIi8+Cjwvc3ZnPgo='" :alt="item.name" />
-              </div>
-              <div class="item-info">
-                <h4>{{ item.name }}</h4>
-                <div class="item-details">₱{{ formatPrice(item.price) }}</div>
+        <!-- Cart Content Container -->
+        <div class="cart-content">
+          <!-- Cart Items Section -->
+          <div class="cart-items-section">
+            <div class="cart-items" v-if="cart.length">
+              <div v-for="item in cart" :key="item.id" class="cart-item">
+                <div class="item-left">
+                  <div class="item-thumb">
+                    <img :src="item.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxMEMyNi4wNzUgMTAgMjAgMTYuNzUgMjAgMjVDMjAgMTYuNzUgMTMuOTI1IDEwIDIwIDEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjI1IiByPSIyIiBmaWxsPSIjNkI3MjgwIi8+Cjwvc3ZnPgo='" :alt="item.name" />
+                  </div>
+                  <div class="item-info">
+                    <h4>{{ item.name }}</h4>
+                    <div class="item-details">₱{{ formatPrice(item.price) }} each</div>
+                  </div>
+                </div>
+
+                <div class="item-center">
+                  <div class="qty-controls">
+                    <button @click="updateCartQuantity(item, -1)" class="qty-btn">-</button>
+                    <span class="qty">{{ item.quantity }}</span>
+                    <button @click="updateCartQuantity(item, 1)" class="qty-btn">+</button>
+                  </div>
+                </div>
+
+                <div class="item-right">
+                  <div class="item-total">₱{{ formatPrice(item.price * item.quantity) }}</div>
+                  <button @click="removeFromCart(item)" class="remove-btn">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="item-right">
-              <div class="qty-controls">
-                <button @click="updateCartQuantity(item, -1)">-</button>
-                <span class="qty">{{ item.quantity }}</span>
-                <button @click="updateCartQuantity(item, 1)">+</button>
+            <div v-else class="empty-cart">
+              <div class="empty-cart-icon">
+                <i class="fas fa-shopping-cart"></i>
               </div>
-              <div class="item-total">₱{{ formatPrice(item.price * item.quantity) }}</div>
-              <button @click="removeFromCart(item)" class="remove-btn">×</button>
+              <h3>Your cart is empty</h3>
+              <p>Add some products to get started</p>
             </div>
           </div>
 
-          <div class="cart-summary">
-            <div class="summary-line subtotal">
-              <span>Subtotal</span>
-              <span>₱{{ formatPrice(cartSubtotal) }}</span>
+          <!-- Cart Summary & Checkout -->
+          <div class="cart-checkout-section" v-if="cart.length">
+            <div class="cart-summary">
+              <h3>Order Summary</h3>
+              <div class="summary-row">
+                <span>Subtotal ({{ cart.length }} items)</span>
+                <span>₱{{ formatPrice(cartSubtotal) }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Delivery Fee</span>
+                <span>₱{{ formatPrice(deliveryFee) }}</span>
+              </div>
+              <div class="summary-divider"></div>
+              <div class="summary-row total">
+                <span>Total</span>
+                <span>₱{{ formatPrice(cartTotal) }}</span>
+              </div>
             </div>
-            <div class="summary-line">
-              <span>Delivery Fee</span>
-              <span>₱{{ formatPrice(deliveryFee) }}</span>
-            </div>
-            <div class="summary-line total">
-              <span>Total</span>
-              <span>₱{{ formatPrice(cartTotal) }}</span>
+
+            <div class="checkout-section">
+              <button
+                v-if="!showCustomerForm"
+                @click="showCustomerForm = true"
+                class="proceed-btn"
+              >
+                <i class="fas fa-arrow-right"></i>
+                Proceed to Checkout
+              </button>
+
+              <transition name="slide">
+                <form v-if="showCustomerForm" @submit.prevent="processOrder" class="customer-form">
+                  <h3>Customer Information</h3>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Customer Name</label>
+                      <input type="text" v-model="customerDetails.name" required placeholder="Enter customer name" />
+                    </div>
+                  </div>
+
+                  <div class="form-row two-col">
+                    <div class="form-group">
+                      <label>Phone Number</label>
+                      <input type="tel" v-model="customerDetails.phone" required placeholder="Contact number" />
+                    </div>
+                    <div class="form-group">
+                      <label>Payment Method</label>
+                      <select v-model="customerDetails.paymentMethod" required>
+                        <option value="counter">Pay at Counter</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Delivery Option</label>
+                      <div class="delivery-options">
+                        <label class="delivery-option">
+                          <input type="radio" v-model="customerDetails.deliveryOption" value="delivery" />
+                          <span>Delivery</span>
+                        </label>
+                        <label class="delivery-option">
+                          <input type="radio" v-model="customerDetails.deliveryOption" value="pickup" />
+                          <span>Pickup</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-row" v-if="customerDetails.deliveryOption === 'delivery'">
+                    <div class="form-group">
+                      <label>Delivery Address</label>
+                      <textarea v-model="customerDetails.address" required placeholder="Enter delivery address"></textarea>
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="button" @click="showCustomerForm = false" class="cancel-btn">
+                      <i class="fas fa-arrow-left"></i>
+                      Back to Cart
+                    </button>
+                    <button type="submit" class="submit-btn" :disabled="!isCheckedIn">
+                      <i class="fas fa-check"></i>
+                      {{ isCheckedIn ? 'Process Order' : 'Check In Required' }}
+                    </button>
+                  </div>
+                </form>
+              </transition>
             </div>
           </div>
         </div>
-
-        <div v-else class="empty-cart">
-          <i class="fas fa-shopping-cart"></i>
-          <p>Your cart is empty</p>
-        </div>
-
-        <transition name="slide">
-          <form v-if="showCustomerForm" @submit.prevent="processOrder" class="customer-form">
-            <h3>Customer Details</h3>
-
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" v-model="customerDetails.name" required placeholder="Customer name" />
-            </div>
-
-            <div class="form-group two-col">
-              <div>
-                <label>Phone</label>
-                <input type="tel" v-model="customerDetails.phone" required placeholder="Contact number" />
-              </div>
-              <div>
-                <label>Delivery Option</label>
-                <select v-model="customerDetails.deliveryOption" required>
-                  <option value="delivery">Delivery</option>
-                  <option value="pickup">Pickup</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Address</label>
-              <textarea v-model="customerDetails.address" required placeholder="Delivery address"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label>Payment Method</label>
-              <select v-model="customerDetails.paymentMethod" required>
-                <option value="cash">Cash on Delivery</option>
-                <option value="gcash">GCash</option>
-                <option value="counter">Pay at Counter</option>
-              </select>
-            </div>
-
-            <button type="submit" class="submit-btn" :disabled="!isCheckedIn">Process Order</button>
-          </form>
-        </transition>
       </aside>
     </div>
 
-    
+    <!-- Confirm Modal for Print -->
+    <ConfirmModal
+      v-model:show="showPrintConfirm"
+      title="Print Order Slip"
+      message="Would you like to print the order slip?"
+      confirm-text="Yes, Print"
+      cancel-text="No, Thanks"
+      @confirm="handlePrintConfirm"
+    />
   </div>
 </template>
 
@@ -159,23 +225,27 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ProductCard from './ProductCard.vue'
+import ConfirmModal from './ConfirmModal.vue'
 import { useInventoryStore } from '../stores/inventoryStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useCheckInOutStore } from '../stores/checkInOutStore'
 import { collection, addDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { useAuthStore } from '../stores/authStore'
+import { useToast } from 'vue-toastification'
 
 const inventoryStore = useInventoryStore()
 const settingsStore = useSettingsStore()
 const checkInOutStore = useCheckInOutStore()
 const authStore = useAuthStore()
+const toast = useToast()
 
 // Local state
 const searchQuery = ref('')
 const categoryFilter = ref('')
 const cart = ref([])
 const showCustomerForm = ref(false)
+const showPrintConfirm = ref(false)
 const customerDetails = ref({
   name: '',
   phone: '',
@@ -183,6 +253,7 @@ const customerDetails = ref({
   deliveryOption: 'delivery',
   paymentMethod: 'cash'
 })
+const pendingOrderData = ref(null)
 
 // Constants
 const deliveryFee = computed(() => {
@@ -299,7 +370,7 @@ const clearCart = () => {
 const processOrder = async () => {
   // Check if user is checked in
   if (!isCheckedIn.value) {
-    alert('You must check in before processing orders. Please check in from the dashboard.')
+    toast.error('You must check in before processing orders. Please check in from the dashboard.')
     return
   }
 
@@ -317,25 +388,26 @@ const processOrder = async () => {
       processed: false
     }
 
-  // Save order to Firestore
-  const orderRef = await addDoc(collection(db, 'orders'), orderData)
+    // Save order to Firestore
+    const orderRef = await addDoc(collection(db, 'orders'), orderData)
 
-  // Update inventory stock (pass order id for idempotency)
-  await inventoryStore.processOrder(orderRef.id, cart.value)
+    // Update inventory stock (pass order id for idempotency)
+    await inventoryStore.processOrder(orderRef.id, cart.value)
 
-  // Clear the cart after successful order
-  cart.value = []
+    // Clear the cart after successful order
+    cart.value = []
 
-  // Show success message
-  alert(`Order #${orderRef.id} has been created successfully!`)
+    // Show success message
+    toast.success(`Order #${orderRef.id} has been created successfully!`)
 
-    // Option to print receipt
-    if (confirm('Would you like to print the order slip?')) {
-      printOrderSlip(orderRef.id, orderData)
-    }
+    // Store order data for potential printing
+    pendingOrderData.value = { id: orderRef.id, ...orderData }
+
+    // Show print confirmation modal
+    showPrintConfirm.value = true
   } catch (error) {
     console.error('Error processing order:', error)
-    alert('Failed to process order. Please try again.')
+    toast.error('Failed to process order. Please try again.')
   }
 }
 
@@ -343,9 +415,9 @@ const printOrderSlip = (orderId, orderData) => {
   try {
     // Create a new window for printing
     const printWindow = window.open('', '_blank')
-    
+
     if (!printWindow) {
-      alert('Please allow pop-ups for this site to print order slips.')
+      toast.error('Please allow pop-ups for this site to print order slips.')
       return
     }
 
@@ -356,28 +428,28 @@ const printOrderSlip = (orderId, orderData) => {
       <head>
         <title>Order #${orderId}</title>
         <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            padding: 20px; 
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
             margin: 0;
             line-height: 1.4;
           }
-          .header { 
-            text-align: center; 
-            margin-bottom: 20px; 
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
           }
           .customer {
             margin-bottom: 20px;
           }
-          .item { 
-            margin: 5px 0; 
+          .item {
+            margin: 5px 0;
             display: flex;
             justify-content: space-between;
           }
-          .total { 
-            margin-top: 20px; 
+          .total {
+            margin-top: 20px;
             font-weight: bold;
             border-top: 1px solid #000;
             padding-top: 10px;
@@ -398,7 +470,7 @@ const printOrderSlip = (orderId, orderData) => {
           <h2>Order Slip #${orderId}</h2>
           <p>${new Date().toLocaleString()}</p>
         </div>
-        
+
         <div class="customer">
           <h3>Customer Details:</h3>
           <p><strong>Name:</strong> ${orderData.customer.name}</p>
@@ -439,22 +511,29 @@ const printOrderSlip = (orderId, orderData) => {
     // Write to the new window and print
     printWindow.document.write(receiptHtml)
     printWindow.document.close()
-    
+
     // Ensure document is ready before printing
     printWindow.onload = () => {
       printWindow.print()
     }
-    
+
     // Fallback for immediate print
     setTimeout(() => {
       if (printWindow && !printWindow.closed) {
         printWindow.print()
       }
     }, 500)
-    
+
   } catch (error) {
     console.error('Error printing order slip:', error)
-    alert('Error printing order slip. Please try again or save the order details manually.')
+    toast.error('Error printing order slip. Please try again or save the order details manually.')
+  }
+}
+
+const handlePrintConfirm = () => {
+  if (pendingOrderData.value) {
+    printOrderSlip(pendingOrderData.value.id, pendingOrderData.value)
+    pendingOrderData.value = null
   }
 }
 
@@ -470,8 +549,23 @@ onMounted(async () => {
   max-width: 1600px;
   margin: 0 auto;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--background-primary);
+  background: linear-gradient(135deg, var(--background-primary) 0%, var(--background-secondary) 100%);
   min-height: 100vh;
+  position: relative;
+}
+
+.order-processing::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .page-header {
@@ -544,15 +638,43 @@ onMounted(async () => {
 
 .order-container {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 1.5rem;
+  grid-template-columns: 1fr 420px;
+  gap: var(--space-8);
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .product-selection {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 6px 18px rgba(20, 20, 40, 0.04);
+  background: var(--surface-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-primary);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.product-selection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
+  transform: scaleX(0);
+  transition: transform var(--transition-normal);
+}
+
+.product-selection:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-color);
+}
+
+.product-selection:hover::before {
+  transform: scaleX(1);
 }
 
 .toolbar {
@@ -571,9 +693,20 @@ onMounted(async () => {
 
 .search-bar input,
 .search-bar select {
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #e6e9ef;
-  border-radius: 8px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--surface-primary);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+}
+
+.search-bar input:focus,
+.search-bar select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .category-select-wrapper {
@@ -646,51 +779,386 @@ onMounted(async () => {
   gap: 0.75rem;
 }
 
-.order-cart { background:white; border-radius:12px; padding:1rem; box-shadow:0 6px 18px rgba(20,20,40,0.04); position:sticky; top:1rem }
+.order-cart {
+  background: var(--surface-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-primary);
+  position: sticky;
+  top: var(--space-6);
+  transition: all var(--transition-normal);
+}
 
-.cart-header { display:flex; justify-content:space-between; align-items:center }
-.cart-actions { display:flex; gap:0.5rem }
-.clear-btn { border:1px solid #ef4444; color:#ef4444; background:white; padding:0.4rem 0.65rem; border-radius:8px }
-.details-btn { background:#f3f4f6; border:none; padding:0.4rem 0.65rem; border-radius:8px }
+.order-cart:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-color);
+}
 
-.cart-item { display:flex; justify-content:space-between; gap:0.5rem; padding:0.6rem 0; border-bottom:1px solid #f1f5f9 }
-.item-left { display:flex; gap:0.6rem; align-items:center }
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.cart-header h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cart-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cart-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+}
+
+.cart-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.clear-btn {
+  border: 1px solid var(--error-color);
+  color: var(--error-color);
+  background: var(--surface-primary);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.clear-btn:hover {
+  background: var(--error-color);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.details-btn {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.details-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--surface-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  transition: all var(--transition-fast);
+  gap: var(--space-4);
+}
+
+.cart-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent-color);
+  transform: translateX(2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.cart-item:last-child {
+  margin-bottom: 0;
+}
+
+.item-left {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
 .item-thumb {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 4px;
-  background: #f8fafc;
+  border-radius: var(--radius-md);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
 }
 
 .item-thumb img {
   max-width: 100%;
   max-height: 100%;
   object-fit: cover;
+  border-radius: var(--radius-md);
 }
-.item-info h4 { margin:0; font-size:0.95rem }
-.item-details { color:#6b7280; font-size:0.85rem }
 
-.item-right { display:flex; align-items:center; gap:0.6rem }
-.qty-controls { display:flex; align-items:center; gap:0.35rem }
-.qty-controls button { padding:0.2rem 0.45rem; border-radius:8px; border:1px solid #e6e9ef; background:white }
-.qty { min-width:26px; text-align:center }
-.item-total { font-weight:600 }
-.remove-btn { background:none; border:none; color:#ef4444; font-size:1.05rem }
+.item-info {
+  min-width: 0;
+  flex: 1;
+}
 
-.cart-summary { margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid #f1f5f9 }
-.summary-line { display:flex; justify-content:space-between; color:#6b7280; margin-bottom:0.45rem }
-.summary-line.total { font-size:1.05rem; color:#111827; font-weight:700 }
+.item-info h4 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.customer-form { margin-top:0.8rem }
-.form-group { margin-bottom:0.65rem }
-.form-group label { display:block; font-size:0.85rem; color:#374151; margin-bottom:0.25rem }
-.form-group input, .form-group select, .form-group textarea { width:100%; padding:0.5rem; border:1px solid #e6e9ef; border-radius:8px }
-.form-group.two-col { display:flex; gap:0.5rem }
-.submit-btn { width:100%; padding:0.7rem; background:var(--accent-color); color:white; border:none; border-radius:8px; margin-top:0.5rem }
+.item-details {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-1);
+}
+
+.item-center {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--surface-primary);
+  border-radius: var(--radius-sm);
+  padding: 0px;
+  border: 1px solid var(--border-primary);
+}
+
+.qty-controls button {
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-primary);
+  background: var(--surface-primary);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+}
+
+.qty-controls button:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.qty {
+  min-width: 40px;
+  text-align: center;
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.item-total {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  min-width: 80px;
+  text-align: right;
+}
+
+.remove-btn {
+  background: none;
+  border: 1px solid var(--error-color);
+  color: var(--error-color);
+  font-size: var(--font-size-lg);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-btn:hover {
+  background: var(--error-color);
+  color: white;
+  transform: scale(1.1);
+}
+
+.cart-summary {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  background: var(--surface-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.summary-line.total {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-primary);
+  margin-top: var(--space-3);
+}
+
+.customer-form {
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  background: var(--surface-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.customer-form h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.customer-form h3::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  border-radius: var(--radius-sm);
+}
+
+.form-group {
+  margin-bottom: var(--space-5);
+}
+
+.form-group label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+  font-weight: var(--font-medium);
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--surface-primary);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+}
+
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input::placeholder, .form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-group.two-col {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: var(--space-4) var(--space-6);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-dark));
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-medium);
+  margin-top: var(--space-5);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent-color));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.submit-btn:hover::before {
+  left: 100%;
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
 
 .mobile-bar { display:none }
 
@@ -707,6 +1175,32 @@ onMounted(async () => {
   .toolbar { flex-direction:column; align-items:stretch }
   .mobile-bar { display:flex; position:fixed; bottom:12px; left:12px; right:12px; gap:0.6rem; background:#ffffff; padding:0.6rem; border-radius:10px; box-shadow:0 8px 26px rgba(20,20,40,0.12); align-items:center; justify-content:space-between }
   .process-btn { background:var(--accent-color); color:white; padding:0.5rem 0.8rem; border-radius:8px; border:none }
+
+  /* Mobile cart item layout */
+  .cart-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    min-height: auto;
+  }
+
+  .item-left {
+    gap: var(--space-2);
+  }
+
+  .item-center {
+    justify-content: center;
+  }
+
+  .item-right {
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .item-total {
+    min-width: auto;
+    text-align: left;
+  }
 }
 
 .slide-enter-active, .slide-leave-active { transition: all 220ms ease }
@@ -714,4 +1208,227 @@ onMounted(async () => {
 .slide-enter-to { transform: translateY(0); opacity:1 }
 .slide-leave-from { opacity:1 }
 .slide-leave-to { opacity:0; transform: translateY(-6px) }
+
+/* Enhanced Cart Layout */
+.cart-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.cart-items-section {
+  flex: 1;
+}
+
+.cart-checkout-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cart-summary {
+  background: var(--surface-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.cart-summary h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cart-summary h3::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  border-radius: var(--radius-sm);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.summary-row.total {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-primary);
+  margin-top: var(--space-3);
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--border-primary);
+  margin: var(--space-3) 0;
+}
+
+.checkout-section {
+  width: 100%;
+}
+
+.proceed-btn {
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-dark));
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.proceed-btn:hover {
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent-color));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.proceed-btn i {
+  font-size: var(--font-size-sm);
+}
+
+/* Enhanced Empty Cart State */
+.empty-cart {
+  text-align: center;
+  padding: var(--space-12);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--surface-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+}
+
+.empty-cart-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--surface-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+}
+
+.empty-cart-icon i {
+  font-size: 2.5rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.empty-cart h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-cart p {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Enhanced Form Styling */
+.form-row {
+  margin-bottom: var(--space-5);
+}
+
+.form-row.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.delivery-options {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.delivery-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.delivery-option:hover {
+  background: var(--surface-hover);
+}
+
+.delivery-option input[type="radio"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.delivery-option span {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-primary);
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.cancel-btn:hover {
+  background: var(--error-color);
+  color: white;
+  border-color: var(--error-color);
+  transform: translateY(-1px);
+}
+
+.cancel-btn i {
+  font-size: var(--font-size-sm);
+}
 </style>

@@ -213,85 +213,52 @@
     </div>
 
     <!-- Cancel Order Modal -->
-    <div v-if="showCancelModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Cancel Order</h2>
-          <button @click="showCancelModal = false" class="close-btn">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <p>Are you sure you want to cancel this order?</p>
-          <div class="form-group">
-            <label>Reason for Cancellation</label>
-            <textarea 
-              v-model="cancellationReason" 
-              placeholder="Please provide a reason..."
-              required
-            ></textarea>
-          </div>
-
-          <div class="modal-actions">
-            <button @click="showCancelModal = false" class="cancel-btn">
-              No, Keep Order
-            </button>
-            <button @click="confirmCancelOrder" class="confirm-btn">
-              Yes, Cancel Order
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      v-model:show="showCancelModal"
+      title="Cancel Order"
+      message="Are you sure you want to cancel this order?"
+      confirm-text="Yes, Cancel Order"
+      cancel-text="No, Keep Order"
+      :show-input="true"
+      input-label="Reason for Cancellation"
+      input-placeholder="Please provide a reason..."
+      @confirm="handleCancelConfirm"
+    />
 
     <!-- Delete Order Modal -->
-    <div v-if="showDeleteModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Delete Order</h2>
-          <button @click="showDeleteModal = false" class="close-btn">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <p>Are you sure you want to permanently delete this order?</p>
-          <p>This action cannot be undone.</p>
-
-          <div class="modal-actions">
-            <button @click="showDeleteModal = false" class="cancel-btn">
-              Cancel
-            </button>
-            <button @click="confirmDeleteOrder" class="confirm-btn">
-              Yes, Delete Order
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      v-model:show="showDeleteModal"
+      title="Delete Order"
+      message="Are you sure you want to permanently delete this order? This action cannot be undone."
+      confirm-text="Yes, Delete Order"
+      cancel-text="Cancel"
+      @confirm="handleDeleteConfirm"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/authStore'
+import ConfirmModal from './ConfirmModal.vue'
 import { format } from 'date-fns'
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  query,
+  where,
+  orderBy,
   getDocs,
   updateDoc,
   doc,
   addDoc,
   deleteDoc,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
+import { useToast } from 'vue-toastification'
 
 const authStore = useAuthStore()
+const toast = useToast()
 
 // Constants
 const orderStatuses = ['Pending', 'Processing', 'Completed', 'Cancelled']
@@ -301,7 +268,6 @@ const orders = ref([])
 const selectedOrder = ref(null)
 const showCancelModal = ref(false)
 const showDeleteModal = ref(false)
-const cancellationReason = ref('')
 const orderToCancel = ref(null)
 const orderToDelete = ref(null)
 const staffList = ref([])
@@ -505,9 +471,9 @@ const cancelOrder = (order) => {
   showCancelModal.value = true
 }
 
-const confirmCancelOrder = async () => {
-  if (!orderToCancel.value || !cancellationReason.value) {
-    alert('Please provide a cancellation reason.')
+const handleCancelConfirm = async (reason) => {
+  if (!orderToCancel.value || !reason) {
+    toast.error('Please provide a cancellation reason.')
     return
   }
 
@@ -515,14 +481,14 @@ const confirmCancelOrder = async () => {
     const orderId = orderToCancel.value?.id
     if (!orderId) {
       console.error('Invalid order ID')
-      alert('Error: Invalid order ID')
+      toast.error('Error: Invalid order ID')
       return
     }
 
     const orderRef = doc(db, 'orders', orderId)
     await updateDoc(orderRef, {
       status: 'Cancelled',
-      cancellationReason: cancellationReason.value,
+      cancellationReason: reason,
       cancelledAt: serverTimestamp(),
       cancelledBy: authStore.user?.uid || 'system'
     })
@@ -530,7 +496,7 @@ const confirmCancelOrder = async () => {
     // Add to order history
     await addDoc(collection(db, `orders/${orderId}/history`), {
       type: 'cancellation',
-      description: `Order cancelled: ${cancellationReason.value}`,
+      description: `Order cancelled: ${reason}`,
       timestamp: serverTimestamp(),
       updatedBy: authStore.user?.uid || 'system'
     })
@@ -539,18 +505,17 @@ const confirmCancelOrder = async () => {
     const order = orders.value.find(o => o.id === orderId)
     if (order) {
       order.status = 'Cancelled'
-      order.cancellationReason = cancellationReason.value
+      order.cancellationReason = reason
     }
 
     // Reset modal
     showCancelModal.value = false
-    cancellationReason.value = ''
     orderToCancel.value = null
-    
-    alert('Order cancelled successfully!')
+
+    toast.success('Order cancelled successfully!')
   } catch (error) {
     console.error('Error cancelling order:', error)
-    alert('Failed to cancel order. Please try again.')
+    toast.error('Failed to cancel order. Please try again.')
   }
 }
 
@@ -559,7 +524,7 @@ const deleteOrder = (order) => {
   showDeleteModal.value = true
 }
 
-const confirmDeleteOrder = async () => {
+const handleDeleteConfirm = async () => {
   if (!orderToDelete.value) return
 
   try {
@@ -572,11 +537,11 @@ const confirmDeleteOrder = async () => {
     // Reset modal
     showDeleteModal.value = false
     orderToDelete.value = null
-    
-    alert('Order deleted successfully!')
+
+    toast.success('Order deleted successfully!')
   } catch (error) {
     console.error('Error deleting order:', error)
-    alert('Failed to delete order. Please try again.')
+    toast.error('Failed to delete order. Please try again.')
   }
 }
 
