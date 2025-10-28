@@ -27,11 +27,14 @@
         <li>Real-time inventory tracking</li>
       </ul>
 
-      <h3>3. Order Processing</h3>
-      <p>The order processing system is divided into two main sections:</p>
+      <h3>3. Order Processing System</h3>
+      <p>The order processing system provides efficient order management with enhanced bulk operations:</p>
       <ul>
         <li><strong>New Order:</strong> Create new customer orders with an intuitive interface. Select products from your catalog, specify quantities, add customer information, and process orders efficiently.</li>
-        <li><strong>Orders:</strong> Comprehensive order management where you can view all orders, track their status (Pending, Processing, Completed, Cancelled), update order details, assign orders to staff members, and manage the complete order lifecycle.</li>
+        <li><strong>Order Management:</strong> Comprehensive order management interface with advanced filtering, search capabilities, and professional bulk operations for handling multiple orders simultaneously.</li>
+        <li><strong>Bulk Operations:</strong> Revolutionary multi-select functionality allowing you to update status, assign staff, or export multiple orders at once, dramatically improving workflow efficiency.</li>
+        <li><strong>Smart Filtering:</strong> Filter orders by status, date range, and assigned staff to quickly find the orders you need to manage.</li>
+        <li><strong>Real-time Updates:</strong> Order changes are reflected immediately across the system with visual feedback and notifications.</li>
       </ul>
 
       <h3>4. Order Export Features</h3>
@@ -58,9 +61,22 @@
       <h3>7. User Management & Logout</h3>
       <p>Click on your avatar in the top right corner to access the Guide Manual or log out of the system securely. The system maintains user sessions and provides role-based access control.</p>
 
-      <h3>8. Tips for Efficient Use</h3>
+      <h3>8. Advanced Order Management Features</h3>
+      <ul>
+        <li><strong>QR Code Tracking:</strong> Generate and share QR codes with customers for easy order tracking and status updates.</li>
+        <li><strong>Bulk Operations:</strong> Use checkbox selection to perform actions on multiple orders simultaneously, saving time on routine tasks.</li>
+        <li><strong>Order Templates:</strong> Create templates from frequently ordered items to speed up repeat customer orders.</li>
+        <li><strong>Delivery Scheduling:</strong> Plan and schedule deliveries in advance with time slot management for better logistics.</li>
+        <li><strong>Order History Tracking:</strong> Access detailed logs of all order activities for audit trails and customer service.</li>
+      </ul>
+
+      <h3>9. Tips for Efficient Use</h3>
       <ul>
         <li>Use the search and filter functions to quickly locate products and orders</li>
+        <li>Leverage bulk operations for routine tasks like status updates and staff assignments</li>
+        <li>Create order templates for your most common orders to speed up processing</li>
+        <li>Use QR codes to provide customers with easy access to order tracking</li>
+        <li>Schedule deliveries during off-peak hours to optimize logistics</li>
         <li>Regularly export order data for backup and record-keeping purposes</li>
         <li>Monitor the dashboard daily for business performance insights</li>
         <li>Keep inventory levels updated to maintain accurate stock information</li>
