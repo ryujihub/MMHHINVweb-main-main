@@ -714,7 +714,285 @@ const viewOrder = (order) => {
 }
 
 const printOrder = (order) => {
-  // Implementation similar to OrderProcessing component
+  // Create a new window for printing
+  const printWindow = window.open('', '_blank', 'width=800,height=600')
+  
+  // Generate receipt HTML
+  const receiptHTML = generateReceiptHTML(order)
+  
+  // Write HTML to the new window
+  printWindow.document.write(receiptHTML)
+  printWindow.document.close()
+  
+  // Wait for content to load, then print
+  printWindow.onload = () => {
+    printWindow.print()
+    printWindow.close()
+  }
+}
+
+const generateReceiptHTML = (order) => {
+  const currentDate = new Date().toLocaleString()
+  const subtotal = order.subtotal || (order.total - (order.deliveryFee || 0))
+  const deliveryFee = order.deliveryFee || 0
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Receipt - Order #${order.id.slice(-6)}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+          background: white;
+          padding: 20px;
+          max-width: 400px;
+          margin: 0 auto;
+        }
+        
+        .receipt-header {
+          text-align: center;
+          border-bottom: 2px solid #000;
+          padding-bottom: 10px;
+          margin-bottom: 15px;
+        }
+        
+        .company-name {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        
+        .company-info {
+          font-size: 10px;
+          margin-bottom: 3px;
+        }
+        
+        .receipt-title {
+          font-size: 14px;
+          font-weight: bold;
+          margin-top: 10px;
+        }
+        
+        .order-info {
+          margin-bottom: 15px;
+          border-bottom: 1px dashed #000;
+          padding-bottom: 10px;
+        }
+        
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 3px;
+        }
+        
+        .customer-section {
+          margin-bottom: 15px;
+          border-bottom: 1px dashed #000;
+          padding-bottom: 10px;
+        }
+        
+        .section-title {
+          font-weight: bold;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+        }
+        
+        .items-section {
+          margin-bottom: 15px;
+        }
+        
+        .item-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 3px;
+          padding: 2px 0;
+        }
+        
+        .item-name {
+          flex: 1;
+          margin-right: 10px;
+        }
+        
+        .item-qty {
+          margin-right: 10px;
+          min-width: 30px;
+          text-align: center;
+        }
+        
+        .item-price {
+          min-width: 60px;
+          text-align: right;
+        }
+        
+        .totals-section {
+          border-top: 1px solid #000;
+          padding-top: 10px;
+          margin-top: 15px;
+        }
+        
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 3px;
+        }
+        
+        .final-total {
+          border-top: 1px solid #000;
+          padding-top: 5px;
+          margin-top: 5px;
+          font-weight: bold;
+          font-size: 14px;
+        }
+        
+        .receipt-footer {
+          text-align: center;
+          margin-top: 20px;
+          padding-top: 10px;
+          border-top: 1px dashed #000;
+          font-size: 10px;
+        }
+        
+        .status-badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 10px;
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+        
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-processing { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        
+        @media print {
+          body { padding: 0; }
+          .receipt-header { page-break-inside: avoid; }
+          .totals-section { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="receipt-header">
+        <div class="company-name">METRO MANILA HILLS HARDWARE</div>
+        <div class="company-info">Hardware & Construction Supplies</div>
+        <div class="company-info">📍 Metro Manila Hills, Philippines</div>
+        <div class="company-info">📞 Contact: +63 XXX XXX XXXX</div>
+        <div class="receipt-title">SALES RECEIPT</div>
+      </div>
+      
+      <div class="order-info">
+        <div class="info-row">
+          <span>Receipt #:</span>
+          <span>#${order.id.slice(-6)}</span>
+        </div>
+        <div class="info-row">
+          <span>Date:</span>
+          <span>${formatDate(order.createdAt)}</span>
+        </div>
+        <div class="info-row">
+          <span>Printed:</span>
+          <span>${currentDate}</span>
+        </div>
+        <div class="info-row">
+          <span>Status:</span>
+          <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+        </div>
+        ${order.assignedTo ? `
+        <div class="info-row">
+          <span>Staff:</span>
+          <span>${getStaffName(order.assignedTo)}</span>
+        </div>
+        ` : ''}
+      </div>
+      
+      <div class="customer-section">
+        <div class="section-title">Customer Information</div>
+        <div class="info-row">
+          <span>Name:</span>
+          <span>${order.customer.name}</span>
+        </div>
+        <div class="info-row">
+          <span>Phone:</span>
+          <span>${order.customer.phone}</span>
+        </div>
+        ${order.customer.address ? `
+        <div class="info-row">
+          <span>Address:</span>
+          <span>${order.customer.address}</span>
+        </div>
+        ` : ''}
+        ${order.customer.deliveryOption ? `
+        <div class="info-row">
+          <span>Delivery:</span>
+          <span>${order.customer.deliveryOption}</span>
+        </div>
+        ` : ''}
+        ${order.customer.paymentMethod ? `
+        <div class="info-row">
+          <span>Payment:</span>
+          <span>${order.customer.paymentMethod}</span>
+        </div>
+        ` : ''}
+      </div>
+      
+      <div class="items-section">
+        <div class="section-title">Items Ordered</div>
+        <div class="item-row" style="border-bottom: 1px solid #000; font-weight: bold; margin-bottom: 5px;">
+          <span class="item-name">ITEM</span>
+          <span class="item-qty">QTY</span>
+          <span class="item-price">AMOUNT</span>
+        </div>
+        ${order.items.map(item => `
+        <div class="item-row">
+          <span class="item-name">${item.name}</span>
+          <span class="item-qty">×${item.quantity}</span>
+          <span class="item-price">₱${formatPrice(item.price * item.quantity)}</span>
+        </div>
+        `).join('')}
+      </div>
+      
+      <div class="totals-section">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>₱${formatPrice(subtotal)}</span>
+        </div>
+        ${deliveryFee > 0 ? `
+        <div class="total-row">
+          <span>Delivery Fee:</span>
+          <span>₱${formatPrice(deliveryFee)}</span>
+        </div>
+        ` : ''}
+        <div class="total-row final-total">
+          <span>TOTAL AMOUNT:</span>
+          <span>₱${formatPrice(order.total)}</span>
+        </div>
+      </div>
+      
+      <div class="receipt-footer">
+        <div>Thank you for your business!</div>
+        <div>Please keep this receipt for your records</div>
+        <div style="margin-top: 10px;">
+          For inquiries, please contact us at the number above
+        </div>
+        <div style="margin-top: 5px; font-size: 8px;">
+          Generated by Metro Manila Hills Hardware Order Management System
+        </div>
+      </div>
+    </body>
+    </html>
+  `
 }
 
 const canCancelOrder = (order) => {
