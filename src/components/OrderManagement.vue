@@ -22,13 +22,19 @@
             </option>
           </select>
         </div>
-        <div class="search">
-          <i class="fas fa-search"></i>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="Search orders..."
-          >
+        <div class="header-right">
+          <button @click="exportToDocx" class="export-btn">
+            <i class="fas fa-file-word"></i>
+            Export to DOCX
+          </button>
+          <div class="search">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Search orders..."
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -113,16 +119,20 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button @click="viewOrder(order)" class="view-btn">
+                <button @click="viewOrder(order)" class="view-btn" title="View Order">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button @click="printOrder(order)" class="print-btn">
+                <button @click="printOrder(order)" class="print-btn" title="Print Order">
                   <i class="fas fa-print"></i>
+                </button>
+                <button @click="exportSingleOrder(order)" class="export-single-btn" title="Export to DOCX">
+                  <i class="fas fa-file-word"></i>
                 </button>
                 <button 
                   v-if="canCancelOrder(order)"
                   @click="cancelOrder(order)" 
                   class="cancel-btn"
+                  title="Cancel Order"
                 >
                   <i class="fas fa-times"></i>
                 </button>
@@ -130,6 +140,7 @@
                   v-if="isAdmin"
                   @click="deleteOrder(order)" 
                   class="delete-btn"
+                  title="Delete Order"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
@@ -256,6 +267,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useToast } from 'vue-toastification'
+import { exportOrdersToDocx, exportSingleOrderToDocx } from '../utils/docxExport'
 
 const authStore = useAuthStore()
 const toast = useToast()
@@ -560,6 +572,41 @@ const getEventIcon = (type) => {
   return icons[type] || icons.default
 }
 
+const exportToDocx = async () => {
+  try {
+    const ordersToExport = sortedOrders.value
+    
+    if (ordersToExport.length === 0) {
+      toast.warning('No orders to export')
+      return
+    }
+
+    const fileName = await exportOrdersToDocx(ordersToExport, {
+      title: 'Metro Manila Hills Hardware - Order Report',
+      includeCustomerDetails: true,
+      includeSummary: true
+    })
+    
+    toast.success(`Orders exported successfully as ${fileName}`)
+  } catch (error) {
+    console.error('Error exporting to DOCX:', error)
+    toast.error('Failed to export orders. Please try again.')
+  }
+}
+
+const exportSingleOrder = async (order) => {
+  try {
+    const fileName = await exportSingleOrderToDocx(order, {
+      title: 'Metro Manila Hills Hardware - Order Details'
+    })
+    
+    toast.success(`Order exported successfully as ${fileName}`)
+  } catch (error) {
+    console.error('Error exporting order to DOCX:', error)
+    toast.error('Failed to export order. Please try again.')
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
@@ -590,6 +637,35 @@ onMounted(async () => {
 .filters {
   display: flex;
   gap: 1rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.export-btn:hover {
+  background: #047857;
+}
+
+.export-btn i {
+  font-size: 1rem;
 }
 
 .filters select,
@@ -726,9 +802,27 @@ td {
   color: #1e40af;
 }
 
+.export-single-btn {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.export-single-btn:hover {
+  background: #a7f3d0;
+}
+
 .cancel-btn {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.delete-btn {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fca5a5;
 }
 
 /* Modal Styles */
@@ -906,6 +1000,17 @@ td {
     overflow-x: auto;
   }
 
+  .header-right {
+    width: 100%;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .export-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .search {
     width: 100%;
   }
@@ -930,6 +1035,15 @@ td {
 
   .action-buttons {
     flex-direction: column;
+  }
+
+  .header-right {
+    flex-direction: column-reverse;
+  }
+
+  .export-btn {
+    font-size: 0.875rem;
+    padding: 0.625rem 0.875rem;
   }
 }
 </style>

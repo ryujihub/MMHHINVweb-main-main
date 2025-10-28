@@ -92,10 +92,6 @@
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-menu-items">
-                <a href="#" class="menu-item">
-                  <i class="fas fa-user"></i>
-                  Profile
-                </a>
                 <router-link to="/guide-manual" class="menu-item">
                   <i class="fas fa-book"></i>
                   Guide Manual

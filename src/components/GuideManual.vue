@@ -11,32 +11,63 @@
     </div>
     <div class="guide-content" ref="guideContent">
       <h2>Welcome to Metro Manila Hills Hardware Management System!</h2>
-      <p>This guide will help you navigate and utilize the features of this application.</p>
+      <p>This comprehensive guide will help you navigate and utilize all features of the hardware inventory and order management system.</p>
 
       <h3>1. Dashboard</h3>
-      <p>The dashboard provides an overview of your daily orders, pending orders, most ordered items, sales over time, and inventory breakdown. It's your central hub for quick insights into your business performance.</p>
+      <p>The dashboard provides a comprehensive overview of your business performance including daily orders, pending orders, most ordered items, sales trends over time, and inventory breakdown. It serves as your central hub for quick insights and key performance indicators.</p>
 
       <h3>2. Product Catalog</h3>
-      <p>The Product Catalog section allows you to efficiently manage your inventory. Here, you can search for products by name, product code, or category, and filter them by category. Each product card displays essential details such as name, category, price, current stock level, and product code. You can also quickly identify stock status (In Stock, Low Stock, Out of Stock) and receive alerts for low stock items.</p>
+      <p>The Product Catalog section allows you to efficiently manage your entire inventory. Features include:</p>
+      <ul>
+        <li>Search products by name, product code, or category</li>
+        <li>Filter products by category for easy browsing</li>
+        <li>View essential product details: name, category, price, current stock, and product code</li>
+        <li>Quick stock status identification (In Stock, Low Stock, Out of Stock)</li>
+        <li>Automatic alerts for low stock items</li>
+        <li>Real-time inventory tracking</li>
+      </ul>
 
       <h3>3. Order Processing</h3>
-      <p>This section is divided into two sub-menus:</p>
+      <p>The order processing system is divided into two main sections:</p>
       <ul>
-        <li><strong>New Order:</strong> Use this to create new customer orders. You can select products from your catalog, specify quantities, and process the order.</li>
-        <li><strong>Orders:</strong> View a list of all orders, track their status (pending, processed, etc.), and manage order details.</li>
+        <li><strong>New Order:</strong> Create new customer orders with an intuitive interface. Select products from your catalog, specify quantities, add customer information, and process orders efficiently.</li>
+        <li><strong>Orders:</strong> Comprehensive order management where you can view all orders, track their status (Pending, Processing, Completed, Cancelled), update order details, assign orders to staff members, and manage the complete order lifecycle.</li>
       </ul>
 
-      <h3>4. Reports</h3>
-      <p>The Reports section offers detailed insights into your sales and inventory. It is divided into:</p>
+      <h3>4. Order Export Features</h3>
+      <p>The system now includes powerful export capabilities for order documentation:</p>
       <ul>
-        <li><strong>Sales Report:</strong> Provides data on total orders, total revenue, average order value, and best-selling products over a selected period. You can export this data to CSV or PDF.</li>
-        <li><strong>Inventory Report:</strong> Shows stock movement, total items sold, low stock items, and total stock value. This report can also be exported to CSV or PDF.</li>
+        <li><strong>Bulk Order Export:</strong> Export all filtered orders to Microsoft Word (DOCX) format with comprehensive reporting including order summaries, customer details, and business analytics.</li>
+        <li><strong>Individual Order Export:</strong> Export detailed single order documents in DOCX format for customer records, invoicing, or documentation purposes.</li>
+        <li><strong>Professional Formatting:</strong> All exports include company branding, proper formatting, and detailed breakdowns suitable for business use.</li>
+        <li><strong>Automatic File Naming:</strong> Files are automatically named with timestamps for easy organization and record-keeping.</li>
       </ul>
 
-      <h3>5. User Profile & Logout</h3>
-      <p>Click on your avatar in the top right corner to access your profile or log out of the system.</p>
+      <h3>5. Reports & Analytics</h3>
+      <p>The Reports section provides detailed business insights and analytics:</p>
+      <ul>
+        <li><strong>Sales Report:</strong> Comprehensive sales data including total orders, total revenue, average order value, best-selling products, and performance trends over selected periods. Export capabilities to CSV and PDF formats.</li>
+        <li><strong>Inventory Report:</strong> Detailed inventory analysis showing stock movement, total items sold, low stock alerts, total stock value, and inventory turnover rates. Full export functionality available.</li>
+        <li><strong>Custom Date Ranges:</strong> Filter reports by specific time periods for targeted analysis.</li>
+        <li><strong>Visual Analytics:</strong> Charts and graphs for easy data interpretation.</li>
+      </ul>
 
-      <p>If you encounter any issues or have further questions, please contact support.</p>
+      <h3>6. Settings & Administration</h3>
+      <p>Administrative users have access to system settings and user management features for maintaining the system and managing staff access levels.</p>
+
+      <h3>7. User Management & Logout</h3>
+      <p>Click on your avatar in the top right corner to access the Guide Manual or log out of the system securely. The system maintains user sessions and provides role-based access control.</p>
+
+      <h3>8. Tips for Efficient Use</h3>
+      <ul>
+        <li>Use the search and filter functions to quickly locate products and orders</li>
+        <li>Regularly export order data for backup and record-keeping purposes</li>
+        <li>Monitor the dashboard daily for business performance insights</li>
+        <li>Keep inventory levels updated to maintain accurate stock information</li>
+        <li>Use the export features to generate professional documentation for customers and stakeholders</li>
+      </ul>
+
+      <p><strong>Support:</strong> If you encounter any issues or have questions about using the system, please contact your system administrator or technical support team.</p>
     </div>
   </div>
 </template>
@@ -52,50 +83,63 @@ const exportToPdf = () => {
   const doc = new jsPDF();
   let y = 20; // Initial Y position
 
+  // Header
   doc.setFontSize(20);
-  doc.text('Guide Manual', 20, y);
-  y += 15; // Space after main title
+  doc.setFont(undefined, 'bold');
+  doc.text('Metro Manila Hills Hardware', 20, y);
+  y += 10;
+  doc.setFontSize(16);
+  doc.text('System Guide Manual', 20, y);
+  y += 15;
 
-  doc.setFontSize(14);
-  doc.text('Welcome to Metro Manila Hills Hardware Management System!', 20, y);
-  y += 10; // Space after welcome message
-
-  doc.setFontSize(12);
-  doc.text('This guide will help you navigate and utilize the features of this application.', 20, y);
-  y += 15; // Space before first section
+  // Date
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, y);
+  y += 15;
 
   const addText = (text, x, yPos, fontSize = 12, isBold = false, lineHeightMultiplier = 1.2) => {
     doc.setFontSize(fontSize);
     doc.setFont(undefined, isBold ? 'bold' : 'normal');
     const splitText = doc.splitTextToSize(text, 170); // Max width for text
     doc.text(splitText, x, yPos);
-    return yPos + (splitText.length * fontSize * lineHeightMultiplier / doc.internal.scaleFactor);
+    return yPos + (splitText.length * fontSize * lineHeightMultiplier / doc.internal.scaleFactor) + 2;
+  };
+
+  const checkPageBreak = (currentY, additionalSpace = 20) => {
+    if (currentY + additionalSpace > 280) {
+      doc.addPage();
+      return 20;
+    }
+    return currentY;
   };
 
   if (guideContent.value) {
     const sections = guideContent.value.children;
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
+      
       if (section.tagName === 'H2') {
-        y = addText(section.textContent, 20, y + 10, 16, true); // Larger space before H2
+        y = checkPageBreak(y, 25);
+        y = addText(section.textContent, 20, y + 8, 16, true);
       } else if (section.tagName === 'H3') {
-        y = addText(section.textContent, 20, y + 8, 14, true); // Smaller space before H3
+        y = checkPageBreak(y, 20);
+        y = addText(section.textContent, 20, y + 6, 14, true);
       } else if (section.tagName === 'P') {
-        y = addText(section.textContent, 20, y + 5); // Smaller space before P
+        y = checkPageBreak(y, 15);
+        y = addText(section.textContent, 20, y + 3);
       } else if (section.tagName === 'UL') {
         const listItems = Array.from(section.children).map(li => li.textContent);
         listItems.forEach(item => {
-          y = addText(`• ${item}`, 25, y + 4); // Even smaller space for list items
+          y = checkPageBreak(y, 12);
+          y = addText(`• ${item}`, 25, y + 2);
         });
-      }
-      if (y > 280) { // Check if content exceeds page height
-        doc.addPage();
-        y = 20;
+        y += 3; // Extra space after list
       }
     }
   }
 
-  doc.save('guide_manual.pdf');
+  doc.save('hardware_system_guide_manual.pdf');
 };
 </script>
 
@@ -130,14 +174,15 @@ const exportToPdf = () => {
   padding: 0.75rem 1rem;
   border: none;
   border-radius: 0.375rem;
-  background: #f3f4f6;
-  color: #374151;
+  background: #dc2626;
+  color: white;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-weight: 500;
 }
 
 .export-btn:hover {
-  background: #e5e7eb;
+  background: #b91c1c;
 }
 
 .page-header h1 {
