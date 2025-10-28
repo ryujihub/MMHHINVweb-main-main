@@ -1229,12 +1229,24 @@ onMounted(async () => {
   overflow: auto;
 }
 
+/* Default: Desktop View */
 .desktop-view {
-  display: block;
+  display: block !important;
 }
 
 .mobile-view {
-  display: none;
+  display: none !important;
+}
+
+/* Ensure desktop view on larger screens */
+@media (min-width: 769px) {
+  .desktop-view {
+    display: block !important;
+  }
+
+  .mobile-view {
+    display: none !important;
+  }
 }
 
 table {
@@ -1886,11 +1898,11 @@ td {
 @media (max-width: 768px) {
   /* Switch to mobile card layout */
   .desktop-view {
-    display: none;
+    display: none !important;
   }
 
   .mobile-view {
-    display: block;
+    display: block !important;
   }
 
   .orders-container {
