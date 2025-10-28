@@ -1,0 +1,22 @@
+{
+  "name": "Metro Manila Hills Hardware - Inventory Management",
+  "short_name": "MMH Hardware",
+  "description": "Professional inventory management system for Metro Manila Hills Hardware",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/mmh-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#4a9d5f",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}

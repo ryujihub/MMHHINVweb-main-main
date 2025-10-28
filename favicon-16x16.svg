@@ -1,0 +1,23 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="8" cy="8" r="7.5" fill="#2563eb" stroke="#1d4ed8" stroke-width="1"/>
+  
+  <!-- Hammer icon (simplified for small size) -->
+  <g fill="white">
+    <!-- Hammer handle -->
+    <rect x="4" y="9" width="1" height="5" rx="0.5"/>
+    
+    <!-- Hammer head -->
+    <rect x="3" y="7" width="3" height="2" rx="0.5"/>
+    
+    <!-- Wrench (simplified) -->
+    <g transform="translate(9, 4)">
+      <!-- Wrench body -->
+      <rect x="0" y="2" width="4" height="1" rx="0.5"/>
+      <!-- Wrench head -->
+      <circle cx="4" cy="2.5" r="1" fill="none" stroke="white" stroke-width="0.8"/>
+      <!-- Wrench jaw -->
+      <path d="M0 1.5 L1 0.5 L1 1.5 L2 2.5 L1 3.5 L1 4.5 L0 3.5 Z"/>
+    </g>
+  </g>
+</svg>

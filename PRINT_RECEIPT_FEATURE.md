@@ -18,6 +18,12 @@ Implemented a professional receipt printing system that generates formatted rece
 - **Auto-Print**: Automatically triggers print dialog
 - **Clean Layout**: Optimized for thermal and standard printers
 - **Mobile Compatible**: Works on both desktop and mobile devices
+- **Dual Integration**: Available in both Order Management and Order Processing
+
+### 📍 **Available Locations**
+- **Order Management**: Print existing orders from the management interface
+- **Order Processing**: Print receipts immediately after creating new orders
+- **Consistent Format**: Same professional receipt format across both components
 
 ## Receipt Layout
 
@@ -110,12 +116,18 @@ const printOrder = (order) => {
 
 ## Usage Instructions
 
-### For Staff Members
+### In Order Management (Existing Orders)
 1. **Locate Order**: Find the order in the table or mobile card view
 2. **Click Print**: Click the print button (🖨️) in the actions column/section
 3. **Print Dialog**: Browser print dialog will automatically open
 4. **Select Printer**: Choose your preferred printer or save as PDF
 5. **Print Receipt**: Click print to generate the physical receipt
+
+### In Order Processing (New Orders)
+1. **Complete Order**: Fill out customer details and process the order
+2. **Print Confirmation**: After successful order creation, a print confirmation modal appears
+3. **Choose to Print**: Click "Yes, Print" to generate the receipt immediately
+4. **Automatic Print**: Receipt opens in new window and print dialog appears automatically
 
 ### For Customers
 - **Receipt Copy**: Customers receive a professional receipt with all order details

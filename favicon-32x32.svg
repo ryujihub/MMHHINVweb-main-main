@@ -1,0 +1,34 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#2563eb" stroke="#1d4ed8" stroke-width="2"/>
+  
+  <!-- Hammer icon -->
+  <g fill="white">
+    <!-- Hammer handle -->
+    <rect x="8" y="18" width="2" height="10" rx="1"/>
+    
+    <!-- Hammer head -->
+    <rect x="6" y="14" width="6" height="4" rx="1"/>
+    
+    <!-- Wrench -->
+    <g transform="translate(18, 8)">
+      <!-- Wrench body -->
+      <rect x="0" y="4" width="8" height="2" rx="1"/>
+      <!-- Wrench head -->
+      <circle cx="8" cy="5" r="2" fill="none" stroke="white" stroke-width="1.5"/>
+      <!-- Wrench jaw -->
+      <path d="M0 3 L2 1 L2 3 L4 5 L2 7 L2 9 L0 7 Z"/>
+    </g>
+  </g>
+  
+  <!-- Small gear accent -->
+  <g transform="translate(22, 20)" fill="white" opacity="0.8">
+    <circle cx="0" cy="0" r="3"/>
+    <circle cx="0" cy="0" r="1.5" fill="#2563eb"/>
+    <!-- Gear teeth -->
+    <rect x="-0.5" y="-4" width="1" height="2"/>
+    <rect x="-0.5" y="2" width="1" height="2"/>
+    <rect x="-4" y="-0.5" width="2" height="1"/>
+    <rect x="2" y="-0.5" width="2" height="1"/>
+  </g>
+</svg>

@@ -414,120 +414,282 @@ const processOrder = async () => {
 const printOrderSlip = (orderId, orderData) => {
   try {
     // Create a new window for printing
-    const printWindow = window.open('', '_blank')
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
 
     if (!printWindow) {
       toast.error('Please allow pop-ups for this site to print order slips.')
       return
     }
 
-    // Generate receipt HTML
-    const receiptHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Order #${orderId}</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            margin: 0;
-            line-height: 1.4;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-          }
-          .customer {
-            margin-bottom: 20px;
-          }
-          .item {
-            margin: 5px 0;
-            display: flex;
-            justify-content: space-between;
-          }
-          .total {
-            margin-top: 20px;
-            font-weight: bold;
-            border-top: 1px solid #000;
-            padding-top: 10px;
-          }
-          .summary-line {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
-          }
-          @media print {
-            body { font-size: 12px; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>MMH Hardware</h1>
-          <h2>Order Slip #${orderId}</h2>
-          <p>${new Date().toLocaleString()}</p>
-        </div>
-
-        <div class="customer">
-          <h3>Customer Details:</h3>
-          <p><strong>Name:</strong> ${orderData.customer.name}</p>
-          <p><strong>Phone:</strong> ${orderData.customer.phone}</p>
-          <p><strong>Address:</strong> ${orderData.customer.address}</p>
-          <p><strong>Delivery:</strong> ${orderData.customer.deliveryOption}</p>
-          <p><strong>Payment:</strong> ${orderData.customer.paymentMethod}</p>
-        </div>
-
-        <div class="items">
-          <h3>Order Items:</h3>
-          ${orderData.items.map(item => `
-            <div class="item">
-              <span>${item.name} (${item.quantity} × ₱${formatPrice(item.price)})</span>
-              <span>₱${formatPrice(item.price * item.quantity)}</span>
-            </div>
-          `).join('')}
-        </div>
-
-        <div class="total">
-          <div class="summary-line">
-            <span>Subtotal:</span>
-            <span>₱${formatPrice(orderData.subtotal)}</span>
-          </div>
-          <div class="summary-line">
-            <span>Delivery Fee:</span>
-            <span>₱${formatPrice(orderData.deliveryFee)}</span>
-          </div>
-          <div class="summary-line">
-            <span><strong>Total:</strong></span>
-            <span><strong>₱${formatPrice(orderData.total)}</strong></span>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
+    // Generate professional receipt HTML
+    const receiptHTML = generateReceiptHTML(orderId, orderData)
 
     // Write to the new window and print
-    printWindow.document.write(receiptHtml)
+    printWindow.document.write(receiptHTML)
     printWindow.document.close()
 
-    // Ensure document is ready before printing
+    // Wait for content to load, then print
     printWindow.onload = () => {
       printWindow.print()
+      printWindow.close()
     }
-
-    // Fallback for immediate print
-    setTimeout(() => {
-      if (printWindow && !printWindow.closed) {
-        printWindow.print()
-      }
-    }, 500)
 
   } catch (error) {
     console.error('Error printing order slip:', error)
     toast.error('Error printing order slip. Please try again or save the order details manually.')
   }
+}
+
+const generateReceiptHTML = (orderId, orderData) => {
+  const currentDate = new Date().toLocaleString()
+  const orderDate = orderData.createdAt ? new Date(orderData.createdAt).toLocaleString() : currentDate
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Receipt - Order #${orderId.slice(-6)}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+          background: white;
+          padding: 20px;
+          max-width: 400px;
+          margin: 0 auto;
+        }
+        
+        .receipt-header {
+          text-align: center;
+          border-bottom: 2px solid #000;
+          padding-bottom: 10px;
+          margin-bottom: 15px;
+        }
+        
+        .company-name {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        
+        .company-info {
+          font-size: 10px;
+          margin-bottom: 3px;
+        }
+        
+        .receipt-title {
+          font-size: 14px;
+          font-weight: bold;
+          margin-top: 10px;
+        }
+        
+        .order-info {
+          margin-bottom: 15px;
+          border-bottom: 1px dashed #000;
+          padding-bottom: 10px;
+        }
+        
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 3px;
+        }
+        
+        .customer-section {
+          margin-bottom: 15px;
+          border-bottom: 1px dashed #000;
+          padding-bottom: 10px;
+        }
+        
+        .section-title {
+          font-weight: bold;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+        }
+        
+        .items-section {
+          margin-bottom: 15px;
+        }
+        
+        .item-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 3px;
+          padding: 2px 0;
+        }
+        
+        .item-name {
+          flex: 1;
+          margin-right: 10px;
+        }
+        
+        .item-qty {
+          margin-right: 10px;
+          min-width: 30px;
+          text-align: center;
+        }
+        
+        .item-price {
+          min-width: 60px;
+          text-align: right;
+        }
+        
+        .totals-section {
+          border-top: 1px solid #000;
+          padding-top: 10px;
+          margin-top: 15px;
+        }
+        
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 3px;
+        }
+        
+        .final-total {
+          border-top: 1px solid #000;
+          padding-top: 5px;
+          margin-top: 5px;
+          font-weight: bold;
+          font-size: 14px;
+        }
+        
+        .receipt-footer {
+          text-align: center;
+          margin-top: 20px;
+          padding-top: 10px;
+          border-top: 1px dashed #000;
+          font-size: 10px;
+        }
+        
+        .status-badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 10px;
+          font-weight: bold;
+          text-transform: uppercase;
+          background: #fef3c7;
+          color: #92400e;
+        }
+        
+        @media print {
+          body { padding: 0; }
+          .receipt-header { page-break-inside: avoid; }
+          .totals-section { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="receipt-header">
+        <div class="company-name">${settingsStore.settings.companyInfo?.name || 'METRO MANILA HILLS HARDWARE'}</div>
+        <div class="company-info">${settingsStore.settings.companyInfo?.description || 'Hardware & Construction Supplies'}</div>
+        <div class="company-info">📍 ${settingsStore.settings.companyInfo?.address || 'Metro Manila Hills, Philippines'}</div>
+        <div class="company-info">📞 Contact: ${settingsStore.settings.companyInfo?.phone || '+63 XXX XXX XXXX'}</div>
+        <div class="receipt-title">SALES RECEIPT</div>
+      </div>
+      
+      <div class="order-info">
+        <div class="info-row">
+          <span>Receipt #:</span>
+          <span>#${orderId.slice(-6)}</span>
+        </div>
+        <div class="info-row">
+          <span>Date:</span>
+          <span>${orderDate}</span>
+        </div>
+        <div class="info-row">
+          <span>Printed:</span>
+          <span>${currentDate}</span>
+        </div>
+        <div class="info-row">
+          <span>Status:</span>
+          <span class="status-badge">${orderData.status || 'Pending'}</span>
+        </div>
+        <div class="info-row">
+          <span>Staff:</span>
+          <span>${authStore.user?.displayName || authStore.user?.email || 'Staff'}</span>
+        </div>
+      </div>
+      
+      <div class="customer-section">
+        <div class="section-title">Customer Information</div>
+        <div class="info-row">
+          <span>Name:</span>
+          <span>${orderData.customer.name}</span>
+        </div>
+        <div class="info-row">
+          <span>Phone:</span>
+          <span>${orderData.customer.phone}</span>
+        </div>
+        ${orderData.customer.address ? `
+        <div class="info-row">
+          <span>Address:</span>
+          <span>${orderData.customer.address}</span>
+        </div>
+        ` : ''}
+        <div class="info-row">
+          <span>Delivery:</span>
+          <span>${orderData.customer.deliveryOption}</span>
+        </div>
+        <div class="info-row">
+          <span>Payment:</span>
+          <span>${orderData.customer.paymentMethod}</span>
+        </div>
+      </div>
+      
+      <div class="items-section">
+        <div class="section-title">Items Ordered</div>
+        <div class="item-row" style="border-bottom: 1px solid #000; font-weight: bold; margin-bottom: 5px;">
+          <span class="item-name">ITEM</span>
+          <span class="item-qty">QTY</span>
+          <span class="item-price">AMOUNT</span>
+        </div>
+        ${orderData.items.map(item => `
+        <div class="item-row">
+          <span class="item-name">${item.name}</span>
+          <span class="item-qty">×${item.quantity}</span>
+          <span class="item-price">₱${formatPrice(item.price * item.quantity)}</span>
+        </div>
+        `).join('')}
+      </div>
+      
+      <div class="totals-section">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>₱${formatPrice(orderData.subtotal)}</span>
+        </div>
+        <div class="total-row">
+          <span>Delivery Fee:</span>
+          <span>₱${formatPrice(orderData.deliveryFee)}</span>
+        </div>
+        <div class="total-row final-total">
+          <span>TOTAL AMOUNT:</span>
+          <span>₱${formatPrice(orderData.total)}</span>
+        </div>
+      </div>
+      
+      <div class="receipt-footer">
+        <div>Thank you for your business!</div>
+        <div>Please keep this receipt for your records</div>
+        <div style="margin-top: 10px;">
+          For inquiries, please contact us at the number above
+        </div>
+        <div style="margin-top: 5px; font-size: 8px;">
+          Generated by Metro Manila Hills Hardware Order Management System
+        </div>
+      </div>
+    </body>
+    </html>
+  `
 }
 
 const handlePrintConfirm = () => {

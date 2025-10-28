@@ -1,0 +1,45 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background (optional, can be transparent) -->
+  <rect width="32" height="32" fill="transparent"/>
+  
+  <!-- Hardware Store Building -->
+  <g transform="translate(4, 2)">
+    <!-- Roof -->
+    <polygon points="0,8 12,2 24,8 24,10 0,10" fill="#2d5a3d" stroke="#1a3d2e" stroke-width="0.5"/>
+    
+    <!-- Awning -->
+    <rect x="0" y="10" width="24" height="3" fill="#ff8c00" stroke="#e67300" stroke-width="0.5"/>
+    <ellipse cx="2" cy="11.5" rx="1" ry="0.8" fill="#ff6b00"/>
+    <ellipse cx="6" cy="11.5" rx="1" ry="0.8" fill="#ff6b00"/>
+    <ellipse cx="10" cy="11.5" rx="1" ry="0.8" fill="#ff6b00"/>
+    <ellipse cx="14" cy="11.5" rx="1" ry="0.8" fill="#ff6b00"/>
+    <ellipse cx="18" cy="11.5" rx="1" ry="0.8" fill="#ff6b00"/>
+    <ellipse cx="22" cy="11.5" rx="1" ry="0.8" fill="#ff6b00"/>
+    
+    <!-- Main Building -->
+    <rect x="0" y="13" width="24" height="12" fill="#4a9d5f" stroke="#2d5a3d" stroke-width="0.5"/>
+    
+    <!-- Windows -->
+    <rect x="2" y="15" width="3" height="3" fill="#87ceeb" stroke="#5f9ea0" stroke-width="0.3"/>
+    <rect x="7" y="15" width="3" height="3" fill="#87ceeb" stroke="#5f9ea0" stroke-width="0.3"/>
+    <rect x="19" y="15" width="3" height="3" fill="#87ceeb" stroke="#5f9ea0" stroke-width="0.3"/>
+    
+    <!-- Door -->
+    <rect x="11" y="17" width="4" height="8" fill="#8b4513" stroke="#654321" stroke-width="0.3"/>
+    <circle cx="14.5" cy="21" r="0.3" fill="#ffd700"/>
+    
+    <!-- Store Front Details -->
+    <rect x="16" y="19" width="2" height="4" fill="#ff8c00" stroke="#e67300" stroke-width="0.2"/>
+    
+    <!-- Cross Pattern (Hardware Symbol) -->
+    <g transform="translate(17, 20)">
+      <rect x="-0.5" y="0" width="1" height="2" fill="#2d5a3d"/>
+      <rect x="0" y="0.5" width="2" height="1" fill="#2d5a3d"/>
+    </g>
+  </g>
+  
+  <!-- MMH Text (simplified for small size) -->
+  <g transform="translate(6, 26)" fill="#2d5a3d" font-family="Arial, sans-serif" font-size="4" font-weight="bold">
+    <text x="0" y="0">MMH</text>
+  </g>
+</svg>

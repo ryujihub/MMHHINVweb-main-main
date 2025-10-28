@@ -33,7 +33,16 @@ export const useSettingsStore = defineStore('settings', () => {
         minimumOrder: 0,
         enabled: true
       }
-    ]
+    ],
+    companyInfo: {
+      name: 'Metro Manila Hills Hardware',
+      address: 'Metro Manila Hills, Philippines',
+      phone: '+63 XXX XXX XXXX',
+      email: '',
+      website: '',
+      description: 'Hardware & Construction Supplies',
+      logo: null // Will store base64 encoded logo or URL
+    }
   })
 
   const loading = ref(false)
@@ -200,6 +209,11 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // Update company information
+  const updateCompanyInfo = async (companyInfo) => {
+    return updateSetting('companyInfo', companyInfo)
+  }
+
   // Reset to default settings
   const resetToDefaults = async () => {
     const defaultSettings = {
@@ -222,7 +236,15 @@ export const useSettingsStore = defineStore('settings', () => {
           minimumOrder: 0,
           enabled: true
         }
-      ]
+      ],
+      companyInfo: {
+        name: 'Metro Manila Hills Hardware',
+        address: 'Metro Manila Hills, Philippines',
+        phone: '+63 XXX XXX XXXX',
+        email: '',
+        website: '',
+        description: 'Hardware & Construction Supplies'
+      }
     }
 
     return saveSettings(defaultSettings)
@@ -249,6 +271,7 @@ export const useSettingsStore = defineStore('settings', () => {
     addDeliveryZone,
     updateDeliveryZone,
     removeDeliveryZone,
+    updateCompanyInfo,
     resetToDefaults
   }
 })

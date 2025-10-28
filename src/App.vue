@@ -7,7 +7,19 @@
     <div class="app-wrapper" :class="{ 'sidebar-hidden': !showSidebar }">
       <nav class="sidebar" :class="{ 'show-sidebar': showSidebar }">
         <div class="sidebar-header">
-          <h1>Metro Manila Hills Hardware</h1>
+          <div class="logo-container">
+            <div class="sidebar-logo">
+              <img src="/mmh-logo.png" alt="MMH Hardware" class="logo-image" @error="handleImageError" @load="logoLoaded = true" />
+              <div class="logo-fallback" v-if="!logoLoaded">
+                <i class="fas fa-hammer"></i>
+                <i class="fas fa-wrench"></i>
+              </div>
+            </div>
+            <div class="logo-text">
+              <h1>MMH Hardware</h1>
+              <span class="logo-subtitle">Inventory System</span>
+            </div>
+          </div>
         </div>
         
         <div class="nav-links">
@@ -66,6 +78,11 @@
             <i :class="showSidebar ? 'fas fa-times' : 'fas fa-bars'"></i>
           </button>
           
+          <!-- Top Bar Logo (Mobile) -->
+          <div class="top-bar-logo" v-if="isMobile">
+            <img src="/mmh-logo.png" alt="MMH Hardware" class="top-logo-image" />
+            <span class="top-logo-text">MMH Hardware</span>
+          </div>
           
           <div class="user-menu">
             <div class="user-profile" @click.stop="toggleUserMenu">
@@ -135,6 +152,7 @@ export default {
     const showSidebar = ref(window.innerWidth > 768) // Hide sidebar on mobile by default
     const showOrderProcessingSubMenu = ref(false) // New state for Order Processing submenu
     const showReportsSubMenu = ref(false) // New state for Reports submenu
+    const logoLoaded = ref(true) // Track logo loading state
 
     // Use store properties with toRefs to maintain reactivity
     const { user, userRole } = toRefs(authStore)
@@ -174,6 +192,10 @@ export default {
       if (!timestamp) return ''
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
       return formatDistanceToNow(date, { addSuffix: true })
+    }
+
+    const handleImageError = () => {
+      logoLoaded.value = false
     }
 
     onMounted(() => {
@@ -487,18 +509,86 @@ a:hover {
   margin-bottom: 24px;
 }
 
-.sidebar-header h1 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: white;
-  letter-spacing: -0.5px;
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.sidebar-header .subtitle {
-  font-size: 0.9rem;
+.sidebar-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.logo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4a9d5f, #ff8c00);
+  border-radius: 8px;
+  position: relative;
+}
+
+.logo-fallback i {
+  color: white;
+  font-size: 12px;
+  position: absolute;
+}
+
+.logo-fallback i:first-child {
+  top: 8px;
+  left: 8px;
+  transform: rotate(-45deg);
+}
+
+.logo-fallback i:last-child {
+  bottom: 8px;
+  right: 8px;
+  transform: rotate(45deg);
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logo-text h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.logo-subtitle {
+  font-size: 0.8rem;
   color: #94a3b8;
-  margin-top: 6px;
+  font-weight: 500;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .nav-links {
@@ -648,6 +738,30 @@ a:hover {
   height: 76px;
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-primary);
+}
+
+/* Top Bar Logo (Mobile) */
+.top-bar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+  margin: 0 20px;
+}
+
+.top-logo-image {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.top-logo-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.25px;
 }
 
   .menu-toggle {
@@ -992,12 +1106,17 @@ a:hover {
       padding: 20px;
     }
 
-    .sidebar-header h1 {
-      font-size: 1.5rem;
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
     }
 
-    .sidebar-header .subtitle {
-      font-size: 0.8rem;
+    .logo-text h1 {
+      font-size: 1.25rem;
+    }
+
+    .logo-subtitle {
+      font-size: 0.7rem;
     }
 
     .nav-link {
@@ -1057,6 +1176,25 @@ a:hover {
 
     .sidebar.show-sidebar {
       transform: translateX(0);
+    }
+
+    /* Mobile logo styles */
+    .logo-container {
+      gap: 12px;
+    }
+
+    .sidebar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .logo-text h1 {
+      font-size: 1.125rem;
+    }
+
+    .logo-subtitle {
+      font-size: 0.65rem;
     }
 
     .menu-toggle {

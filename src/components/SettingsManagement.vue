@@ -241,6 +241,111 @@
         </div>
       </div>
 
+      <!-- Company Information Settings -->
+      <div class="settings-section">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-building"></i>
+            Company Information
+          </h2>
+        </div>
+
+        <div class="settings-card">
+          <h3>Receipt & Business Details</h3>
+          <p class="section-description">This information will appear on printed receipts and business documents</p>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Company Name</label>
+              <p class="setting-description">Business name displayed on receipts</p>
+            </div>
+            <input
+              type="text"
+              v-model="localSettings.companyInfo.name"
+              placeholder="Metro Manila Hills Hardware"
+              class="text-input"
+            />
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Business Description</label>
+              <p class="setting-description">Short description of your business</p>
+            </div>
+            <input
+              type="text"
+              v-model="localSettings.companyInfo.description"
+              placeholder="Hardware & Construction Supplies"
+              class="text-input"
+            />
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Business Address</label>
+              <p class="setting-description">Physical address for receipts and deliveries</p>
+            </div>
+            <textarea
+              v-model="localSettings.companyInfo.address"
+              placeholder="Metro Manila Hills, Philippines"
+              class="textarea-input"
+              rows="2"
+            ></textarea>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Contact Phone Number</label>
+              <p class="setting-description">Primary contact number for customer inquiries</p>
+            </div>
+            <input
+              type="tel"
+              v-model="localSettings.companyInfo.phone"
+              placeholder="+63 XXX XXX XXXX"
+              class="text-input"
+            />
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Email Address (Optional)</label>
+              <p class="setting-description">Business email for customer communications</p>
+            </div>
+            <input
+              type="email"
+              v-model="localSettings.companyInfo.email"
+              placeholder="info@mmhhardware.com"
+              class="text-input"
+            />
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Website (Optional)</label>
+              <p class="setting-description">Business website URL</p>
+            </div>
+            <input
+              type="url"
+              v-model="localSettings.companyInfo.website"
+              placeholder="https://www.mmhhardware.com"
+              class="text-input"
+            />
+          </div>
+
+          <div class="receipt-preview">
+            <h4>Receipt Preview</h4>
+            <div class="preview-receipt">
+              <div class="preview-header">
+                <div class="preview-company-name">{{ localSettings.companyInfo.name || 'Metro Manila Hills Hardware' }}</div>
+                <div class="preview-description">{{ localSettings.companyInfo.description || 'Hardware & Construction Supplies' }}</div>
+                <div class="preview-address">📍 {{ localSettings.companyInfo.address || 'Metro Manila Hills, Philippines' }}</div>
+                <div class="preview-phone">📞 Contact: {{ localSettings.companyInfo.phone || '+63 XXX XXX XXXX' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="settings-actions">
         <button @click="resetToDefaults" class="reset-btn" :disabled="settingsStore.loading">
@@ -278,7 +383,20 @@ const lastSaved = ref(null)
 watch(
   () => settingsStore.settings,
   (newSettings) => {
-    localSettings.value = JSON.parse(JSON.stringify(newSettings))
+    // Ensure companyInfo exists with defaults
+    const settingsWithDefaults = {
+      ...newSettings,
+      companyInfo: {
+        name: 'Metro Manila Hills Hardware',
+        address: 'Metro Manila Hills, Philippines',
+        phone: '+63 XXX XXX XXXX',
+        email: '',
+        website: '',
+        description: 'Hardware & Construction Supplies',
+        ...newSettings.companyInfo
+      }
+    }
+    localSettings.value = JSON.parse(JSON.stringify(settingsWithDefaults))
   },
   { immediate: true, deep: true }
 )
@@ -839,6 +957,99 @@ input:checked + .slider:before {
   .settings-actions {
     flex-direction: column;
     gap: 1rem;
+  }
+}
+
+/* Company Information Styles */
+.text-input, .textarea-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background: white;
+}
+
+.text-input:focus, .textarea-input:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.textarea-input {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.section-description {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.receipt-preview {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.receipt-preview h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.preview-receipt {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 2px dashed #cbd5e0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.preview-header {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.preview-company-name {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: #1a202c;
+}
+
+.preview-description {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: #4a5568;
+}
+
+.preview-address, .preview-phone {
+  font-size: 0.75rem;
+  margin-bottom: 0.125rem;
+  color: #4a5568;
+}
+
+@media (max-width: 768px) {
+  .preview-receipt {
+    max-width: 100%;
+    font-size: 0.8rem;
+  }
+  
+  .receipt-preview {
+    padding: 1rem;
   }
 }
 </style>

@@ -1,6 +1,13 @@
 <template>
   <div class="auth-container">
     <div v-if="isLogin">
+      <!-- Login Page Logo -->
+      <div class="login-logo">
+        <img src="/mmh-logo.png" alt="MMH Hardware" class="login-logo-image" />
+        <h1 class="login-title">MMH Hardware</h1>
+        <p class="login-subtitle">Inventory Management System</p>
+      </div>
+      
       <h2>Login</h2>
       <form @submit.prevent="login">
         <input v-model="email" type="email" placeholder="Email" required />
@@ -148,15 +155,50 @@ export default {
 
 <style scoped>
 .auth-container {
-  max-width: 350px;
-  margin: 80px auto;
+  max-width: 400px;
+  margin: 60px auto;
   padding: 2rem;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Login Logo Styles */
+.login-logo {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+  width: 100%;
+}
+
+.login-logo-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Tablet responsiveness */

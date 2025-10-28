@@ -468,6 +468,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/authStore'
+import { useSettingsStore } from '../stores/settingsStore'
 import ConfirmModal from './ConfirmModal.vue'
 import { format } from 'date-fns'
 import {
@@ -496,6 +497,7 @@ import BulkStatusModal from './BulkStatusModal.vue'
 import BulkAssignModal from './BulkAssignModal.vue'
 
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const toast = useToast()
 
 // Constants
@@ -885,10 +887,10 @@ const generateReceiptHTML = (order) => {
     </head>
     <body>
       <div class="receipt-header">
-        <div class="company-name">METRO MANILA HILLS HARDWARE</div>
-        <div class="company-info">Hardware & Construction Supplies</div>
-        <div class="company-info">📍 Metro Manila Hills, Philippines</div>
-        <div class="company-info">📞 Contact: +63 XXX XXX XXXX</div>
+        <div class="company-name">${settingsStore.settings.companyInfo?.name || 'METRO MANILA HILLS HARDWARE'}</div>
+        <div class="company-info">${settingsStore.settings.companyInfo?.description || 'Hardware & Construction Supplies'}</div>
+        <div class="company-info">📍 ${settingsStore.settings.companyInfo?.address || 'Metro Manila Hills, Philippines'}</div>
+        <div class="company-info">📞 Contact: ${settingsStore.settings.companyInfo?.phone || '+63 XXX XXX XXXX'}</div>
         <div class="receipt-title">SALES RECEIPT</div>
       </div>
       
