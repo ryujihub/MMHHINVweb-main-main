@@ -70,6 +70,15 @@
             Settings
           </router-link>
         </div>
+        
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <div class="footer-divider"></div>
+          <div class="copyright-text">
+            <p>&copy; {{ currentYear }} MMH Hardware</p>
+            <p class="rights-text">All Rights Reserved</p>
+          </div>
+        </div>
       </nav>
 
       <main class="main-content">
@@ -159,6 +168,9 @@ export default {
 
     // Computed property for mobile detection
     const isMobile = computed(() => window.innerWidth <= 768)
+    
+    // Current year for copyright
+    const currentYear = computed(() => new Date().getFullYear())
 
     const toggleUserMenu = () => {
       showUserMenu.value = !showUserMenu.value
@@ -260,13 +272,16 @@ export default {
       showOrderProcessingSubMenu,
       showReportsSubMenu,
       isMobile,
+      currentYear,
       toggleUserMenu,
       // Removed: toggleNotifications,
       toggleSidebar,
       toggleOrderProcessingSubMenu,
       toggleReportsSubMenu,
       handleLogout,
-      formatTime
+      formatTime,
+      logoLoaded,
+      handleImageError
     }
   }
 }
@@ -487,8 +502,8 @@ a:hover {
     padding: var(--space-6);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    position: sticky;
+    height: 100vh;
+    position: fixed;
     left: 0;
     top: 0;
     z-index: 100;
@@ -496,11 +511,15 @@ a:hover {
     transition: all var(--transition-normal);
     border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
     backdrop-filter: blur(10px);
+    overflow-y: auto;
   }
 
   .sidebar.sidebar-hidden {
     transform: translateX(-100%);
-    position: absolute;
+  }
+  
+  .app-wrapper.sidebar-hidden .main-content {
+    margin-left: 0;
   }
 
 .sidebar-header {
@@ -701,6 +720,36 @@ a:hover {
   color: inherit;
 }
 
+/* Sidebar Footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--space-6);
+}
+
+.footer-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: var(--space-4);
+}
+
+.copyright-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.copyright-text p {
+  margin: 0;
+  padding: 2px 0;
+}
+
+.rights-text {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 300;
+}
+
 .main-content {
   flex: 1;
   display: flex;
@@ -708,6 +757,8 @@ a:hover {
   min-height: 100vh;
   background: linear-gradient(135deg, var(--background-primary) 0%, var(--background-secondary) 50%, #e2e8f0 100%);
   position: relative;
+  margin-left: 280px;
+  transition: margin-left var(--transition-normal);
 }
 
 .main-content::before {
