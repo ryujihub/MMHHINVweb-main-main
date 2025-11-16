@@ -1,70 +1,29 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Dashboard from '../components/DashboardNew.vue';
-import Login from '../views/Login.vue';
-import ProductCatalog from '../components/ProductCatalog.vue';
-import OrderProcessing from '../components/OrderProcessing.vue';
-import OrderManagement from '../components/OrderManagement.vue';
-import SettingsManagement from '../components/SettingsManagement.vue';
-import SalesReports from '../components/SalesReports.vue';
-import InventoryReports from '../components/InventoryReports.vue';
-import GuideManual from '../components/GuideManual.vue';
-import { auth } from '../firebase/config';
-import { useAuthStore } from '../stores/authStore';
+import Home from '../views/Home.vue';
+import About from '../views/About.vue';
+import Products from '../views/Products.vue';
+import Contact from '../views/Contact.vue';
 
 const routes = [
   {
-    path: '/login',
-    name: 'Login',
-    component: Login,
-    meta: { requiresAuth: false }
-  },
-  {
     path: '/',
-    name: 'Dashboard',
-    component: Dashboard,
-    meta: { requiresAuth: true }
+    name: 'Home',
+    component: Home
   },
   {
-    path: '/catalog',
-    name: 'ProductCatalog',
-    component: ProductCatalog,
-    meta: { requiresAuth: true }
+    path: '/about',
+    name: 'About',
+    component: About
   },
   {
-    path: '/orders/new',
-    name: 'OrderProcessing',
-    component: OrderProcessing,
-    meta: { requiresAuth: true }
+    path: '/products',
+    name: 'Products',
+    component: Products
   },
   {
-    path: '/orders',
-    name: 'OrderManagement',
-    component: OrderManagement,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/settings',
-    name: 'SettingsManagement',
-    component: SettingsManagement,
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/reports/sales',
-    name: 'SalesReports',
-    component: SalesReports,
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/reports/inventory',
-    name: 'InventoryReports',
-    component: InventoryReports,
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/guide-manual',
-    name: 'GuideManual',
-    component: GuideManual,
-    meta: { requiresAuth: true }
+    path: '/contact',
+    name: 'Contact',
+    component: Contact
   },
   {
     path: '/:pathMatch(.*)*',
@@ -75,43 +34,6 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
-});
-
-// Wait for Firebase Auth to initialize before checking auth state
-let isAuthReady = false;
-const waitForAuth = new Promise(resolve => {
-  const unsubscribe = auth.onAuthStateChanged(user => {
-    isAuthReady = true;
-    unsubscribe();
-    resolve(user);
-  });
-});
-
-router.beforeEach(async (to, from, next) => {
-  if (!isAuthReady) {
-    await waitForAuth;
-  }
-
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
-  const isAuthenticated = auth.currentUser;
-
-  if (requiresAuth && !isAuthenticated) {
-    next('/login');
-  } else if (to.path === '/login' && isAuthenticated) {
-    next('/');
-  } else if (requiresAdmin && isAuthenticated) {
-    // Check if user is admin for admin-only routes
-    const authStore = useAuthStore();
-    if (!authStore.isAdmin) {
-      // Redirect staff users trying to access admin routes
-      next('/');
-      return;
-    }
-    next();
-  } else {
-    next();
-  }
 });
 
 export default router;
