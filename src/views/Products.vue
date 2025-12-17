@@ -9,22 +9,25 @@
 
       <!-- Search and Filter Section -->
       <section class="search-section">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Search products by name, code, or category..."
-            @input="filterProducts"
-          />
-        </div>
-        <div class="category-filter">
-          <select v-model="selectedCategory" @change="filterProducts">
-            <option value="">All Categories</option>
-            <option v-for="category in availableCategories" :key="category" :value="category">
-              {{ category }}
-            </option>
-          </select>
+        <div class="search-wrapper">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Search products by name, code, or category..."
+              @input="filterProducts"
+            />
+          </div>
+          <div class="category-filter">
+            <i class="fas fa-filter"></i>
+            <select v-model="selectedCategory" @change="filterProducts">
+              <option value="">All Categories</option>
+              <option v-for="category in availableCategories" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -46,16 +49,23 @@
               :key="product.id"
               class="product-card"
             >
-              <div class="product-image">
-                <img
-                  :src="product.image || '/placeholder-product.png'"
-                  :alt="product.name"
-                  @error="handleImageError"
-                />
-                <div v-if="product.currentStock === 0" class="out-of-stock-badge">
+              <div class="product-image-wrapper">
+                <div class="product-image">
+                  <img
+                    :src="product.image || '/placeholder-product.png'"
+                    :alt="product.name"
+                    @error="handleImageError"
+                  />
+                  <div class="product-overlay">
+                    <button class="quick-view-btn">
+                      <i class="fas fa-eye"></i> Quick View
+                    </button>
+                  </div>
+                </div>
+                <div v-if="product.currentStock === 0" class="product-badge out-of-stock">
                   Out of Stock
                 </div>
-                <div v-else-if="product.currentStock > 0 && product.currentStock <= 10" class="low-stock-badge">
+                <div v-else-if="product.currentStock > 0 && product.currentStock <= 10" class="product-badge low-stock">
                   Limited Stock
                 </div>
               </div>
@@ -270,8 +280,8 @@ export default {
 
 <style scoped>
 .products-page {
-  padding: 60px 32px;
-  background: #f8fafc;
+  padding: 80px 40px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
   min-height: calc(100vh - 76px);
 }
 
@@ -287,10 +297,11 @@ export default {
 }
 
 .products-header h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 16px;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
@@ -302,10 +313,18 @@ export default {
 
 /* Search Section */
 .search-section {
+  margin-bottom: 50px;
+}
+
+.search-wrapper {
   display: flex;
-  gap: 16px;
-  margin-bottom: 40px;
+  gap: 20px;
   flex-wrap: wrap;
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
 .search-box {
@@ -353,18 +372,34 @@ export default {
 }
 
 .category-filter {
-  min-width: 200px;
+  min-width: 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.category-filter i {
+  position: absolute;
+  left: 16px;
+  color: #64748b;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .category-filter select {
   width: 100%;
-  padding: 14px 16px;
+  padding: 14px 16px 14px 48px;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   font-size: 1rem;
-  background: white;
+  background: #f8fafc;
   cursor: pointer;
   transition: all 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
 .category-filter select:focus {
@@ -394,16 +429,17 @@ export default {
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
   margin-bottom: 60px;
 }
 
 .product-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   animation: fadeInUp 0.5s ease-out backwards;
@@ -437,7 +473,8 @@ export default {
 
 .product-card:hover {
   transform: translateY(-12px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  border-color: #0ea5e9;
 }
 
 @keyframes fadeInUp {
@@ -451,12 +488,18 @@ export default {
   }
 }
 
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
 .product-image {
   position: relative;
   width: 100%;
-  height: 200px;
-  background: #f1f5f9;
-  overflow: hidden;
+  height: 100%;
 }
 
 .product-image img {
@@ -467,21 +510,58 @@ export default {
 }
 
 .product-card:hover .product-image img {
-  transform: scale(1.15) rotate(2deg);
+  transform: scale(1.15);
 }
 
-.out-of-stock-badge,
-.low-stock-badge {
+.product-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.product-card:hover .product-overlay {
+  opacity: 1;
+}
+
+.quick-view-btn {
+  background: white;
+  color: #0f172a;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.quick-view-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.product-badge {
   position: absolute;
   top: 12px;
   right: 12px;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   animation: badgePulse 2s ease-in-out infinite;
-  z-index: 1;
+  z-index: 2;
 }
 
 @keyframes badgePulse {
@@ -493,18 +573,18 @@ export default {
   }
 }
 
-.out-of-stock-badge {
+.product-badge.out-of-stock {
   background: #ef4444;
   color: white;
 }
 
-.low-stock-badge {
+.product-badge.low-stock {
   background: #f59e0b;
   color: white;
 }
 
 .product-info {
-  padding: 24px;
+  padding: 28px 24px;
 }
 
 .product-category {
@@ -531,9 +611,9 @@ export default {
 }
 
 .product-price {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #0ea5e9;
   margin-bottom: 12px;
 }
 
@@ -665,11 +745,12 @@ export default {
 
 /* CTA Section */
 .products-cta {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
-  padding: 60px 40px;
-  border-radius: 16px;
+  padding: 80px 40px;
+  border-radius: 24px;
   text-align: center;
+  box-shadow: 0 20px 50px rgba(14, 165, 233, 0.3);
 }
 
 .products-cta h2 {

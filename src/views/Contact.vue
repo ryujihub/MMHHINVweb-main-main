@@ -302,8 +302,8 @@ export default {
 
 <style scoped>
 .contact-page {
-  padding: 60px 32px;
-  background: #f8fafc;
+  padding: 80px 40px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
   min-height: calc(100vh - 76px);
 }
 
@@ -319,10 +319,11 @@ export default {
 }
 
 .contact-header h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 16px;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
@@ -349,9 +350,10 @@ export default {
 
 .info-card {
   background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 40px 32px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.6s ease-out backwards;
   position: relative;
@@ -395,16 +397,17 @@ export default {
 }
 
 .info-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border-radius: 12px;
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
 }
 
 .info-icon::after {
@@ -453,9 +456,10 @@ export default {
 /* Contact Form Section */
 .contact-form-section {
   background: white;
-  padding: 48px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 56px 48px;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   animation: fadeInRight 0.6s ease-out;
 }
 
@@ -545,13 +549,14 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 15px 35px rgba(14, 165, 233, 0.5);
 }
 
 .btn-primary:active:not(:disabled) {

@@ -113,8 +113,8 @@ export default {
 
 <style scoped>
 .about-page {
-  padding: 60px 32px;
-  background: #f8fafc;
+  padding: 80px 40px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
   min-height: calc(100vh - 76px);
 }
 
@@ -131,10 +131,11 @@ export default {
 }
 
 .about-header h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 16px;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
 }
 
 .about-header h2 {
@@ -165,9 +166,10 @@ export default {
 
 .mv-card {
   background: white;
-  padding: 48px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 56px 48px;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.6s ease-out backwards;
   position: relative;
@@ -209,18 +211,19 @@ export default {
 }
 
 .mv-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 2rem;
-  margin-bottom: 24px;
+  font-size: 2.25rem;
+  margin-bottom: 28px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
 }
 
 .mv-icon::after {
@@ -277,10 +280,11 @@ export default {
 
 .value-card {
   background: white;
-  padding: 40px 32px;
-  border-radius: 16px;
+  padding: 48px 40px;
+  border-radius: 20px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.6s ease-out backwards;
   position: relative;
@@ -316,16 +320,16 @@ export default {
 }
 
 .value-card i {
-  font-size: 3rem;
-  color: #3b82f6;
-  margin-bottom: 20px;
+  font-size: 3.5rem;
+  color: #0ea5e9;
+  margin-bottom: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-block;
 }
 
 .value-card:hover i {
   transform: scale(1.3) rotate(15deg);
-  color: #2563eb;
+  color: #0284c7;
 }
 
 .value-card h3 {
@@ -412,11 +416,12 @@ export default {
 
 /* CTA Section */
 .about-cta {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: white;
-  padding: 60px 40px;
-  border-radius: 16px;
+  padding: 80px 40px;
+  border-radius: 24px;
   text-align: center;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
 }
 
 .about-cta h2 {

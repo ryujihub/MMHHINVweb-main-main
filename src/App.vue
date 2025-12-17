@@ -121,20 +121,29 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary-color: #1e293b;
-  --primary-dark: #0f172a;
-  --primary-light: #334155;
+  --primary-color: #0f172a;
+  --primary-dark: #020617;
+  --primary-light: #1e293b;
   --secondary-color: #64748b;
-  --accent-color: #3b82f6;
-  --accent-dark: #2563eb;
-  --accent-light: #60a5fa;
-  --background-primary: #f8fafc;
-  --background-secondary: #f1f5f9;
+  --accent-color: #0ea5e9;
+  --accent-dark: #0284c7;
+  --accent-light: #38bdf8;
+  --accent-gradient: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  --background-primary: #ffffff;
+  --background-secondary: #f8fafc;
+  --background-tertiary: #f1f5f9;
   --surface-primary: #ffffff;
-  --text-primary: #1e293b;
+  --surface-elevated: #ffffff;
+  --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
   --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 * {
@@ -160,15 +169,15 @@ body {
 
 /* Header */
 .main-header {
-  background: var(--surface-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 1000;
   border-bottom: 1px solid var(--border-primary);
   animation: slideDown 0.5s ease-out;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 @keyframes slideDown {
@@ -183,9 +192,9 @@ body {
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 16px 32px;
+  padding: 20px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -209,17 +218,17 @@ body {
 }
 
 .logo-image {
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 12px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: logoPulse 2s ease-in-out infinite;
+  box-shadow: var(--shadow-md);
 }
 
 .logo-image:hover {
-  transform: rotate(5deg) scale(1.1);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes logoPulse {
@@ -232,17 +241,19 @@ body {
 }
 
 .logo-text h1 {
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
+  letter-spacing: -0.5px;
 }
 
 .logo-subtitle {
   font-size: 0.875rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .main-nav {
@@ -252,14 +263,16 @@ body {
 }
 
 .nav-link {
-  padding: 12px 20px;
+  padding: 10px 20px;
   text-decoration: none;
   color: var(--text-secondary);
-  font-weight: 500;
-  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  letter-spacing: 0.2px;
 }
 
 .nav-link::before {
@@ -268,30 +281,32 @@ body {
   bottom: 0;
   left: 50%;
   width: 0;
-  height: 2px;
-  background: var(--accent-color);
+  height: 3px;
+  background: var(--accent-gradient);
+  border-radius: 2px 2px 0 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(-50%);
 }
 
 .nav-link:hover {
   color: var(--accent-color);
-  background: var(--background-secondary);
-  transform: translateY(-2px);
+  background: rgba(14, 165, 233, 0.08);
+  transform: translateY(-1px);
 }
 
 .nav-link:hover::before {
-  width: 80%;
+  width: 70%;
 }
 
 .nav-link.active {
   color: var(--accent-color);
-  background: rgba(59, 130, 246, 0.1);
-  animation: activePulse 2s ease-in-out infinite;
+  background: rgba(14, 165, 233, 0.12);
+  font-weight: 700;
 }
 
 .nav-link.active::before {
-  width: 80%;
+  width: 70%;
+  background: var(--accent-color);
 }
 
 @keyframes activePulse {
@@ -343,10 +358,10 @@ body {
 
 /* Footer */
 .main-footer {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: white;
-  padding: 60px 32px 24px;
-  margin-top: 80px;
+  padding: 80px 40px 32px;
+  margin-top: 100px;
   animation: fadeInUp 0.8s ease-out;
   position: relative;
   overflow: hidden;
