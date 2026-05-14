@@ -106,7 +106,7 @@
             </div>
 
             <!-- User Menu Dropdown -->
-            <div v-if="showUserMenu" class="user-dropdown" :class="{ show: showUserMenu }">
+            <div v-show="showUserMenu" class="user-dropdown" :class="{ show: showUserMenu }">
               <div class="dropdown-header">
                 <div class="avatar-large">
                   {{ username ? username[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U') }}
@@ -144,6 +144,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
 import { auth, db } from './firebase/config'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
+import { useToast } from 'vue-toastification'
 import { useSettingsStore } from './stores/settingsStore'
 import { doc, getDoc } from 'firebase/firestore' // Removed collection, query, where, onSnapshot
 import { formatDistanceToNow } from 'date-fns'
@@ -192,11 +193,22 @@ export default {
     }
 
     const handleLogout = async () => {
+      console.log('Logout initiated...');
+      const toast = useToast();
+      showUserMenu.value = false; // Close menu immediately
+      
       try {
-        await signOut(auth)
-        router.push('/login')
+        await signOut(auth);
+        console.log('Firebase signOut successful');
+        
+        // Use a small delay to ensure Firebase state propagates
+        setTimeout(() => {
+          router.push('/login');
+          toast.success('Logged out successfully');
+        }, 100);
       } catch (error) {
-        console.error('Logout error:', error)
+        console.error('Logout error:', error);
+        toast.error('Logout failed: ' + error.message);
       }
     }
 
@@ -246,13 +258,12 @@ export default {
       // Close dropdowns when clicking outside
       document.addEventListener('click', (e) => {
         const userProfile = document.querySelector('.user-profile')
-        // Removed: notificationsBtn related logic
+        const userDropdown = document.querySelector('.user-dropdown')
         
-        if (userProfile && !userProfile.contains(e.target)) {
+        if (userProfile && !userProfile.contains(e.target) && 
+            userDropdown && !userDropdown.contains(e.target)) {
           showUserMenu.value = false
         }
-        
-        // Removed: if (notificationsBtn && !notificationsBtn.contains(e.target)) { showNotifications.value = false }
       })
     })
 
@@ -292,100 +303,44 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Enhanced Professional Theme for Hardware Store */
-  --primary-color: #1e293b;
-  --primary-dark: #0f172a;
-  --primary-light: #334155;
+  /* Enhanced Premium Theme - Deep Indigo & Slate */
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #818cf8;
   --secondary-color: #64748b;
-  --accent-color: #3b82f6;
-  --accent-dark: #2563eb;
-  --accent-light: #60a5fa;
-  --success-color: #059669;
-  --success-light: #10b981;
-  --warning-color: #d97706;
-  --warning-light: #f59e0b;
-  --error-color: #dc2626;
-  --error-light: #ef4444;
+  --accent-color: #06b6d4;
+  --accent-hover: #0891b2;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
 
-  /* Enhanced Neutral Colors */
+  /* Surfaces & Backgrounds */
   --background-primary: #f8fafc;
   --background-secondary: #f1f5f9;
-  --background-tertiary: #e2e8f0;
   --surface-primary: #ffffff;
-  --surface-secondary: #f8fafc;
-  --surface-tertiary: #e2e8f0;
-  --surface-hover: #f1f5f9;
-
-  /* Enhanced Text Colors */
+  --surface-secondary: rgba(255, 255, 255, 0.8);
+  --surface-glass: rgba(255, 255, 255, 0.7);
+  
+  /* Text Colors */
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-tertiary: #64748b;
+  --text-tertiary: #94a3b8;
   --text-inverse: #ffffff;
-  --text-muted: #94a3b8;
 
-  /* Enhanced Borders */
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --border-focus: #3b82f6;
-  --border-hover: #94a3b8;
+  /* Borders & Shadows */
+  --border-light: rgba(226, 232, 240, 0.8);
+  --border-medium: #e2e8f0;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-premium: 0 10px 30px -5px rgba(79, 70, 229, 0.15);
 
-  /* Enhanced Shadows */
-  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.1), 0 1px 2px -1px rgba(15, 23, 42, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
-  --shadow-inner: inset 0 2px 4px 0 rgba(15, 23, 42, 0.05);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
-
-  /* Enhanced Transitions */
-  --transition-ultra-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-  /* Enhanced Border Radius */
-  --radius-xs: 4px;
+  /* Radius & Spacing */
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-full: 9999px;
-
-  /* Enhanced Spacing Scale */
-  --space-1: 0.25rem;
-  --space-2: 0rem;
-  --space-3: 0.75rem;
-  --space-4: 0rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
-
-  /* Typography Scale */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-
-  /* Font Weights */
-  --font-light: 300;
-  --font-normal: 400;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
 }
 
 * {
@@ -395,66 +350,41 @@ export default {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, var(--background-primary) 0%, var(--background-secondary) 100%);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--background-primary);
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
 }
 
-/* Global transitions */
-* {
-  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+/* Glassmorphism Utility */
+.glass-effect {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+/* Layout Transitions */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 
-/* Button improvements */
-button {
-  font-family: inherit;
-  transition: all var(--transition-fast);
+/* Premium Card Style */
+.premium-card {
+  background: var(--surface-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-premium);
+  border: 1px solid var(--border-light);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
 
-button:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
-/* Input improvements */
-input, select, textarea {
-  font-family: inherit;
-  transition: all var(--transition-fast);
-}
-
-input:focus, select:focus, textarea:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-  border-color: var(--primary-color);
-}
-
-/* Link improvements */
-a {
-  color: var(--primary-color);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-a:hover {
-  color: var(--primary-dark);
-}
-
-/* Card hover effects */
-.card {
-  transition: all var(--transition-normal);
-}
-
-.card:hover {
-  transform: translateY(-2px);
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
 }
 
 /* Loading animations */
@@ -497,9 +427,9 @@ a:hover {
   .sidebar {
     width: 280px;
     min-width: 280px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    background: #0f172a;
     color: var(--text-inverse);
-    padding: var(--space-6);
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -507,10 +437,9 @@ a:hover {
     left: 0;
     top: 0;
     z-index: 100;
-    box-shadow: var(--shadow-2xl);
-    transition: all var(--transition-normal);
-    border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-xl);
+    transition: all 0.3s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
     overflow-y: auto;
   }
 
@@ -603,10 +532,10 @@ a:hover {
 }
 
 .logo-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #94a3b8;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
@@ -658,10 +587,9 @@ a:hover {
 }
 
 .nav-link.router-link-active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.9));
+  background: var(--primary-color);
   color: white;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
 }
 
 .nav-link.router-link-active::before {
@@ -777,18 +705,19 @@ a:hover {
 }
 
 .top-bar {
-  background: linear-gradient(135deg, var(--surface-primary) 0%, rgba(248, 250, 252, 0.95) 100%);
-  padding: 18px 32px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 90;
-  height: 76px;
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border-primary);
+  height: 70px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-medium);
 }
 
 /* Top Bar Logo (Mobile) */
@@ -866,65 +795,55 @@ a:hover {
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background-color 0.3s;
-  position: relative;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  background: var(--background-secondary);
+  border: 1px solid var(--border-medium);
 }
 
 .user-profile:hover {
-  background: #f5f6fa;
+  background: white;
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-sm);
 }
 
 .user-profile i {
-  font-size: 12px;
-  color: #666;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
   transition: transform 0.3s;
-}
-
-.user-profile i.rotate {
-  transform: rotate(180deg);
-}
-
-.user-profile:hover {
-  background: #f5f6fa;
 }
 
 .user-dropdown {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  background: var(--surface-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  min-width: 320px;
-  margin-top: 8px;
-  padding: 0;
+  background: white !important;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-premium);
+  min-width: 280px;
   z-index: 1000;
   opacity: 0;
   transform: translateY(-10px) scale(0.95);
-  transition: all var(--transition-normal);
-  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--border-medium);
 }
 
 .user-dropdown.show {
   opacity: 1;
   transform: translateY(0) scale(1);
-  pointer-events: all;
 }
 
 .dropdown-header {
-  padding: 24px;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-dark));
-  position: relative;
-  overflow: hidden;
+  gap: 1rem;
 }
 
 .dropdown-header::before {
@@ -1033,6 +952,7 @@ a:hover {
   align-items: center;
   gap: 12px;
   width: calc(100% - 24px);
+  position: relative;
   margin: 8px 12px 12px;
   padding: 12px 18px;
   border: none;

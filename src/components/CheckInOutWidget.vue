@@ -138,10 +138,11 @@ onMounted(async () => {
 
 <style scoped>
 .check-in-out-widget {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 6px 18px rgba(20, 20, 40, 0.04);
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
   position: relative;
 }
 
@@ -151,14 +152,14 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e6e9ef;
+  border-bottom: 1px solid var(--border-medium);
 }
 
 .widget-header h3 {
   margin: 0;
-  color: #1a202c;
+  color: var(--text-primary);
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .status-indicator {
@@ -206,16 +207,18 @@ onMounted(async () => {
 .check-in-btn, .check-out-btn {
   width: auto;
   min-width: 120px;
+  min-height: 48px;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: var(--radius-md);
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  font-size: 0.95rem;
 }
 
 .check-in-btn {
@@ -313,28 +316,33 @@ onMounted(async () => {
   color: #4a5568;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .check-in-out-widget { padding: 1rem; }
   .widget-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-
   .session-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
+  .check-in-btn, .check-out-btn {
+    width: 100%;
+    min-width: auto;
+    min-height: 52px;
+    font-size: 1rem;
+  }
+}
 
+@media (max-width: 480px) {
+  .check-in-out-widget { padding: 0.75rem; }
+  .widget-header h3 { font-size: 1rem; }
   .history-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
-  }
-
-  .check-in-btn, .check-out-btn {
-    width: 100%;
-    min-width: auto;
   }
 }
 </style>

@@ -19,6 +19,10 @@
           <i class="fas fa-file-export"></i>
           Export Selected
         </button>
+        <button v-if="isAdmin" @click="deleteSelected" class="action-btn delete-btn">
+          <i class="fas fa-trash-alt"></i>
+          Delete Selected
+        </button>
       </div>
       
       <button @click="clearSelection" class="clear-btn">
@@ -34,10 +38,14 @@ const props = defineProps({
   selectedOrders: {
     type: Array,
     required: true
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['clearSelection', 'updateStatus', 'assignStaff', 'exportSelected'])
+const emit = defineEmits(['clearSelection', 'updateStatus', 'assignStaff', 'exportSelected', 'deleteSelected'])
 
 const clearSelection = () => {
   emit('clearSelection')
@@ -53,6 +61,10 @@ const assignStaff = () => {
 
 const exportSelected = () => {
   emit('exportSelected')
+}
+
+const deleteSelected = () => {
+  emit('deleteSelected')
 }
 </script>
 
@@ -144,6 +156,16 @@ const exportSelected = () => {
 
 .export-btn:hover {
   background: #a7f3d0;
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.delete-btn:hover {
+  background: #fecaca;
   transform: translateY(-1px);
 }
 

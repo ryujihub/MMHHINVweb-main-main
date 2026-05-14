@@ -37,9 +37,21 @@
             <label>Period:</label>
             <select v-model="dateFilter" class="filter-select">
               <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
               <option value="week">This Week</option>
+              <option value="last7">Last 7 Days</option>
+              <option value="last30">Last 30 Days</option>
               <option value="month">This Month</option>
+              <option value="all">All Time</option>
+              <option value="custom">Custom Range</option>
             </select>
+          </div>
+          
+          <div class="filter-group custom-date-range" v-if="dateFilter === 'custom'">
+            <label>From:</label>
+            <input type="date" v-model="customDateFrom" class="filter-input" />
+            <label>To:</label>
+            <input type="date" v-model="customDateTo" class="filter-input" />
           </div>
           
           <div class="filter-group" v-if="isAdmin">
@@ -436,13 +448,25 @@
       @confirm="handleDeleteConfirm"
     />
 
+    <!-- Bulk Delete Modal -->
+    <ConfirmModal
+      v-model:show="showBulkDeleteModal"
+      title="Delete Selected Orders"
+      :message="`Are you sure you want to permanently delete ${selectedOrders.length} orders? This action cannot be undone.`"
+      confirm-text="Yes, Delete All"
+      cancel-text="Cancel"
+      @confirm="handleBulkDeleteConfirm"
+    />
+
     <!-- Simple Bulk Panel -->
     <SimpleBulkPanel 
       :selectedOrders="selectedOrders"
+      :isAdmin="isAdmin"
       @clearSelection="clearSelection"
       @updateStatus="openBulkStatusModal"
       @assignStaff="openBulkAssignModal"
       @exportSelected="exportSelectedOrders"
+      @deleteSelected="openBulkDeleteModal"
     />
 
     <!-- Bulk Status Modal -->
@@ -512,7 +536,9 @@ const orderToCancel = ref(null)
 const orderToDelete = ref(null)
 const staffList = ref([])
 const statusFilter = ref('')
-const dateFilter = ref('today')
+const dateFilter = ref('month')
+const customDateFrom = ref('')
+const customDateTo = ref('')
 const staffFilter = ref('')
 const searchQuery = ref('')
 const sortBy = ref('createdAt')
@@ -522,6 +548,7 @@ const error = ref(null)
 const selectedOrders = ref([])
 const showBulkStatusModal = ref(false)
 const showBulkAssignModal = ref(false)
+const showBulkDeleteModal = ref(false)
 
 // Computed
 const isAdmin = computed(() => authStore.isAdmin)
@@ -549,18 +576,46 @@ const filteredOrders = computed(() => {
   // Date filter
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate())
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay()) // Start of this week (Sunday)
+  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
   switch (dateFilter.value) {
     case 'today':
       filtered = filtered.filter(order => order.createdAt >= today)
       break
+    case 'yesterday':
+      filtered = filtered.filter(order => order.createdAt >= yesterday && order.createdAt < today)
+      break
     case 'week':
-      filtered = filtered.filter(order => order.createdAt >= weekAgo)
+      filtered = filtered.filter(order => order.createdAt >= weekStart)
+      break
+    case 'last7':
+      filtered = filtered.filter(order => order.createdAt >= sevenDaysAgo)
+      break
+    case 'last30':
+      filtered = filtered.filter(order => order.createdAt >= thirtyDaysAgo)
       break
     case 'month':
-      filtered = filtered.filter(order => order.createdAt >= monthAgo)
+      filtered = filtered.filter(order => order.createdAt >= monthStart)
+      break
+    case 'custom':
+      if (customDateFrom.value) {
+        const from = new Date(customDateFrom.value)
+        filtered = filtered.filter(order => order.createdAt >= from)
+      }
+      if (customDateTo.value) {
+        const to = new Date(customDateTo.value)
+        to.setHours(23, 59, 59, 999)
+        filtered = filtered.filter(order => order.createdAt <= to)
+      }
+      break
+    case 'all':
+    default:
+      // No date filtering — show all orders
       break
   }
 
@@ -1080,6 +1135,36 @@ const handleDeleteConfirm = async () => {
   }
 }
 
+const openBulkDeleteModal = () => {
+  showBulkDeleteModal.value = true
+}
+
+const handleBulkDeleteConfirm = async () => {
+  if (selectedOrders.value.length === 0) return
+
+  loading.value = true
+  try {
+    // Delete all selected orders from Firebase
+    const deletePromises = selectedOrders.value.map(id => 
+      deleteDoc(doc(db, 'orders', id))
+    )
+    
+    await Promise.all(deletePromises)
+
+    // Update local state
+    orders.value = orders.value.filter(o => !selectedOrders.value.includes(o.id))
+    selectedOrders.value = [] // Clear selection
+
+    showBulkDeleteModal.value = false
+    toast.success('Successfully deleted selected orders!')
+  } catch (error) {
+    console.error('Error deleting multiple orders:', error)
+    toast.error('Some orders could not be deleted. Please try again.')
+  } finally {
+    loading.value = false
+  }
+}
+
 const getStaffName = (staffId) => {
   const staff = staffList.value.find(s => s.id === staffId)
   return staff ? staff.name : 'Unassigned'
@@ -1323,87 +1408,91 @@ onMounted(async () => {
 
 <style scoped>
 .order-management {
-  padding: 1.5rem;
-  max-width: 1400px;
+  padding: 2.5rem;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
 .page-header {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 1rem;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  margin-bottom: 2.5rem;
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
+  align-items: center;
+  margin-bottom: 2.5rem;
 }
 
 .header-title h1 {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin: 0 0 0.5rem 0;
-  color: #1f2937;
-  font-size: 2rem;
-  font-weight: 700;
+  gap: 1rem;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
 }
 
 .header-title h1 i {
-  color: #3b82f6;
-  font-size: 1.75rem;
+  color: var(--primary-color);
 }
 
 .header-subtitle {
-  margin: 0;
-  color: #6b7280;
-  font-size: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  margin-top: 0.5rem;
 }
 
 .header-stats {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-width: 80px;
+  background: var(--background-secondary);
+  padding: 1.25rem 2rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  min-width: 120px;
 }
 
 .stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #3b82f6;
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1;
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  font-weight: 700;
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
+  margin-top: 0.5rem;
 }
 
 .header-actions {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-medium);
+  flex-wrap: wrap;
 }
 
 .filters-section {
   display: flex;
   gap: 1.5rem;
-  flex-wrap: wrap;
 }
 
 .filter-group {
@@ -1414,119 +1503,75 @@ onMounted(async () => {
 
 .filter-group label {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
-.filter-select {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
+.filter-select, .filter-input {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-primary);
   background: white;
-  font-size: 0.875rem;
-  min-width: 140px;
-  transition: all 0.2s;
+  min-width: 160px;
+  transition: all 0.2s ease;
 }
 
-.filter-select:focus {
+.filter-select:focus, .filter-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1);
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.actions-section {
-  display: flex;
+.custom-date-range {
+  flex-direction: row;
   align-items: flex-end;
   gap: 1rem;
 }
 
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
+.custom-date-range label {
+  margin-bottom: 0.5rem;
 }
 
-.search-box i {
-  position: absolute;
-  left: 1rem;
-  color: #6b7280;
-  z-index: 1;
+.actions-section {
+  display: flex;
+  gap: 1rem;
 }
 
 .search-input {
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background: white;
-  font-size: 0.875rem;
-  width: 280px;
-  transition: all 0.2s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.search-input::placeholder {
-  color: #9ca3af;
+  padding: 0.75rem 1.25rem 0.75rem 3rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  width: 320px;
 }
 
 .export-btn {
+  background: var(--success-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: linear-gradient(135deg, #059669, #047857);
-  color: white;
+  gap: 0.75rem;
   border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
 }
 
 .export-btn:hover {
-  background: linear-gradient(135deg, #047857, #065f46);
+  filter: brightness(1.1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
 }
 
-.export-btn i {
-  font-size: 1rem;
-}
-
+/* Table Design */
 .orders-container {
   background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.orders-table {
-  overflow: auto;
-}
-
-/* Default: Desktop View */
-.desktop-view {
-  display: block !important;
-}
-
-.mobile-view {
-  display: none !important;
-}
-
-/* Ensure desktop view on larger screens */
-@media (min-width: 769px) {
-  .desktop-view {
-    display: block !important;
-  }
-
-  .mobile-view {
-    display: none !important;
-  }
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-medium);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 table {
@@ -1535,79 +1580,51 @@ table {
 }
 
 th {
-  background: #f9fafb;
-  padding: 1rem;
+  background: var(--background-secondary);
+  padding: 1.25rem 1.5rem;
   text-align: left;
-  font-weight: 500;
-  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  white-space: nowrap;
-}
-
-th i {
-  margin-left: 0.5rem;
 }
 
 td {
-  padding: 1rem;
-  border-top: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  font-size: 0.95rem;
 }
 
-.customer-info {
-  display: flex;
-  flex-direction: column;
+tr:last-child td {
+  border-bottom: none;
 }
 
-.phone {
-  font-size: 0.875rem;
-  color: #6b7280;
+tr:hover td {
+  background: #f8fafc;
 }
 
-.items-summary {
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.order-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 .status-select {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
-  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  border: 1px solid transparent;
 }
 
-.status-select.Pending {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fcd34d;
-}
-
-.status-select.Processing {
-  background: #dbeafe;
-  color: #1e40af;
-  border-color: #93c5fd;
-}
-
-.status-select.Completed {
-  background: #d1fae5;
-  color: #065f46;
-  border-color: #6ee7b7;
-}
-
-.status-select.Cancelled {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fca5a5;
-}
-
-.staff-select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-}
+.status-select.Pending { background: #fef3c7; color: #92400e; }
+.status-select.Processing { background: #dbeafe; color: #1e40af; }
+.status-select.Completed { background: #d1fae5; color: #065f46; }
+.status-select.Cancelled { background: #fee2e2; color: #991b1b; }
 
 .action-buttons {
   display: flex;
@@ -1615,1071 +1632,61 @@ td {
 }
 
 .action-buttons button {
-  padding: 0.5rem;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-
-.view-btn {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.print-btn {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.export-single-btn {
-  background: #d1fae5;
-  color: #059669;
-}
-
-.export-single-btn:hover {
-  background: #a7f3d0;
-}
-
-.cancel-btn {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.delete-btn {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.delete-btn:hover {
-  background: #fca5a5;
-}
-
-/* Enhanced Order Management Styles */
-.checkbox-col {
-  width: 40px;
-  text-align: center;
-}
-
-.order-number {
-  font-weight: 500;
-}
-
-
-
-
-
-.selected {
-  background: #eff6ff;
-}
-
-/* Modal Styles */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  border: 1px solid var(--border-medium);
+  background: white;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.action-buttons button:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Modals */
+.modal {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white;
-  border-radius: 0.5rem;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  background: white;
+  padding: 2rem;
+  background: var(--background-secondary);
 }
 
 .modal-body {
-  padding: 1.5rem;
-}
-
-.order-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  padding: 2rem;
 }
 
 .detail-section h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.items-list {
-  margin: 1rem 0;
-}
-
-.item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-}
-
-.item-quantity {
-  color: #6b7280;
-}
-
-.order-summary {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.summary-line {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.summary-line.total {
-  font-weight: 600;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.order-history {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 2px solid #f3f4f6;
-}
-
-.history-timeline {
-  margin-top: 1rem;
-}
-
-.timeline-event {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem 0;
-  position: relative;
-}
-
-.timeline-event:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 2.5rem;
-  left: 0.85rem;
-  bottom: -1rem;
-  width: 2px;
-  background: #e5e7eb;
-}
-
-.event-icon {
-  width: 2rem;
-  height: 2rem;
-  background: #f3f4f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4b5563;
-  z-index: 1;
-}
-
-.event-details {
-  flex: 1;
-}
-
-.event-description {
-  margin: 0;
-  color: #1f2937;
-}
-
-.event-time {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.modal-actions button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.modal-actions .cancel-btn {
-  background: white;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-}
-
-.modal-actions .confirm-btn {
-  background: #ef4444;
-  border: none;
-  color: white;
-}
-
-/* Mobile Card Styles */
-.orders-cards {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.order-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 1rem;
-  padding: 1rem;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.order-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.order-card.selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.order-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.checkbox-wrapper {
-  margin-top: 0.125rem;
-}
-
-.checkbox-wrapper input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.order-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.order-number {
-  font-weight: 600;
   font-size: 1.125rem;
-  color: #1f2937;
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.order-date {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.order-total {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #059669;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  margin-bottom: 1rem;
-}
-
-.customer-section,
-.items-section {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.customer-section i,
-.items-section i {
-  width: 20px;
-  color: #6b7280;
-  font-size: 1rem;
-}
-
-.customer-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.customer-info div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.customer-name {
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.customer-phone {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.items-summary {
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.status-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.status-wrapper,
-.staff-wrapper,
-.staff-display {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.status-wrapper label,
-.staff-wrapper label,
-.staff-display label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  min-width: 70px;
-}
-
-.status-select-mobile,
-.staff-select-mobile {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  background: white;
-}
-
-.status-select-mobile.Pending {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fcd34d;
-}
-
-.status-select-mobile.Processing {
-  background: #dbeafe;
-  color: #1e40af;
-  border-color: #93c5fd;
-}
-
-.status-select-mobile.Completed {
-  background: #d1fae5;
-  color: #065f46;
-  border-color: #6ee7b7;
-}
-
-.status-select-mobile.Cancelled {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fca5a5;
-}
-
-.staff-display span {
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.card-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex: 1;
-  justify-content: center;
-  min-width: 80px;
-}
-
-.action-btn.view-btn {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.action-btn.view-btn:hover {
-  background: #e5e7eb;
-}
-
-.action-btn.print-btn {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.action-btn.print-btn:hover {
-  background: #bfdbfe;
-}
-
-.action-btn.export-btn {
-  background: #d1fae5;
-  color: #059669;
-}
-
-.action-btn.export-btn:hover {
-  background: #a7f3d0;
-}
-
-.action-btn.cancel-btn {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.action-btn.cancel-btn:hover {
-  background: #fecaca;
-}
-
-.action-btn.delete-btn {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.action-btn.delete-btn:hover {
-  background: #fca5a5;
-}
-
-.no-orders-message {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: #6b7280;
-}
-
-.no-orders-message i {
-  font-size: 3rem;
-  color: #d1d5db;
-  margin-bottom: 1rem;
-  display: block;
-}
-
-.no-orders-message p {
-  font-size: 1.125rem;
-  margin: 0;
-}
-
-/* Enhanced Mobile Responsive Design */
-@media (max-width: 1200px) {
-  .order-management {
-    padding: 1rem;
-  }
-  
-  .page-header {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 1024px) {
-  .header-top {
-    flex-direction: column;
-    gap: 1.5rem;
-    align-items: flex-start;
-  }
-
-  .header-stats {
-    align-self: stretch;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .header-actions {
-    flex-direction: column;
-    gap: 1.5rem;
-    align-items: stretch;
-  }
-
-  .filters-section {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .actions-section {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .search-input {
-    width: 100%;
-    min-width: 200px;
-  }
-
-  .order-details {
-    grid-template-columns: 1fr;
-  }
-
-  /* Table improvements for tablets */
-  .orders-table {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  table {
-    min-width: 800px;
-  }
-
-  th, td {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.875rem;
-  }
-}
-
+/* Mobile responsive */
 @media (max-width: 768px) {
-  /* Switch to mobile card layout */
-  .desktop-view {
-    display: none !important;
-  }
-
-  .mobile-view {
-    display: block !important;
-  }
-
-  .orders-container {
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .order-management {
-    padding: 0.75rem;
-  }
-
-  .page-header {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .header-title h1 {
-    font-size: 1.5rem;
-  }
-
-  .header-title h1 i {
-    font-size: 1.25rem;
-  }
-
-  .header-subtitle {
-    font-size: 0.875rem;
-  }
-
-  .filters-section {
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-  }
-
-  .filter-group {
-    width: 100%;
-  }
-
-  .filter-select {
-    width: 100%;
-    padding: 0.875rem;
-    font-size: 1rem;
-  }
-
-  .actions-section {
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .search-input {
-    width: 100%;
-    padding: 0.875rem 1rem 0.875rem 2.5rem;
-    font-size: 1rem;
-  }
-
-  .export-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 0.875rem 1rem;
-    font-size: 1rem;
-  }
-
-  .stat-card {
-    flex: 1;
-    min-width: 70px;
-    padding: 0.75rem;
-  }
-
-  .stat-number {
-    font-size: 1.125rem;
-  }
-
-  .stat-label {
-    font-size: 0.625rem;
-  }
-
-  /* Enhanced table mobile view */
-  .orders-table {
-    border-radius: 0.5rem;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  table {
-    min-width: 900px;
-  }
-
-  th, td {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.8rem;
-    white-space: nowrap;
-  }
-
-  .customer-info {
-    min-width: 120px;
-  }
-
-  .customer-info .phone {
-    font-size: 0.75rem;
-  }
-
-  .items-summary {
-    max-width: 150px;
-    font-size: 0.75rem;
-  }
-
-  .action-buttons {
-    flex-direction: row;
-    gap: 0.25rem;
-    flex-wrap: wrap;
-  }
-
-  .action-buttons button {
-    padding: 0.5rem;
-    font-size: 0.75rem;
-    min-width: 32px;
-    height: 32px;
-  }
-
-  /* Modal improvements for mobile */
-  .modal-content {
-    width: 95%;
-    margin: 1rem;
-    max-height: 85vh;
-  }
-
-  .modal-header {
-    padding: 1rem;
-  }
-
-  .modal-body {
-    padding: 1rem;
-  }
-
-  .order-details {
-    gap: 1.5rem;
-  }
-
-  .detail-section h3 {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .order-management {
-    padding: 0.5rem;
-  }
-
-  .page-header {
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  /* Mobile card optimizations */
-  .orders-cards {
-    padding: 0.5rem;
-    gap: 0.75rem;
-  }
-
-  .order-card {
-    padding: 0.875rem;
-    border-radius: 0.75rem;
-  }
-
-  .card-header {
-    margin-bottom: 0.875rem;
-    padding-bottom: 0.625rem;
-  }
-
-  .order-number {
-    font-size: 1rem;
-  }
-
-  .order-total {
-    font-size: 1.125rem;
-  }
-
-  .card-body {
-    gap: 0.75rem;
-    margin-bottom: 0.875rem;
-  }
-
-  .customer-section,
-  .items-section {
-    gap: 0.625rem;
-  }
-
-  .status-section {
-    gap: 0.625rem;
-  }
-
-  .status-wrapper,
-  .staff-wrapper,
-  .staff-display {
-    gap: 0.625rem;
-  }
-
-  .status-wrapper label,
-  .staff-wrapper label,
-  .staff-display label {
-    min-width: 60px;
-    font-size: 0.8rem;
-  }
-
-  .card-actions {
-    gap: 0.375rem;
-    padding-top: 0.625rem;
-  }
-
-  .action-btn {
-    padding: 0.625rem 0.5rem;
-    font-size: 0.8rem;
-    min-width: 70px;
-  }
-
-  .action-btn span {
-    display: none;
-  }
-
-  .action-btn i {
-    margin: 0;
-  }
-
-  .header-title h1 {
-    font-size: 1.25rem;
-  }
-
-  .header-subtitle {
-    font-size: 0.8rem;
-  }
-
-  .header-stats {
-    gap: 0.5rem;
-  }
-
-  .stat-card {
-    padding: 0.5rem;
-    min-width: 60px;
-  }
-
-  .stat-number {
-    font-size: 1rem;
-  }
-
-  .stat-label {
-    font-size: 0.6rem;
-  }
-
-  .filter-select {
-    padding: 1rem;
-    font-size: 1.1rem;
-    border-radius: 0.75rem;
-  }
-
-  .search-input {
-    padding: 1rem 1rem 1rem 3rem;
-    font-size: 1.1rem;
-    border-radius: 0.75rem;
-  }
-
-  .search-box i {
-    left: 1.25rem;
-    font-size: 1.1rem;
-  }
-
-  .export-btn {
-    padding: 1rem;
-    font-size: 1.1rem;
-    border-radius: 0.75rem;
-  }
-
-  /* Ultra-mobile table view */
-  table {
-    min-width: 800px;
-  }
-
-  th, td {
-    padding: 0.5rem 0.25rem;
-    font-size: 0.75rem;
-  }
-
-  .checkbox-col {
-    width: 35px;
-  }
-
-  .order-number {
-    font-size: 0.75rem;
-  }
-
-  .customer-info {
-    min-width: 100px;
-  }
-
-  .items-summary {
-    max-width: 120px;
-    font-size: 0.7rem;
-  }
-
-  .status-select, .staff-select {
-    padding: 0.375rem;
-    font-size: 0.75rem;
-    min-width: 80px;
-  }
-
-  .action-buttons button {
-    padding: 0.375rem;
-    font-size: 0.7rem;
-    min-width: 28px;
-    height: 28px;
-  }
-
-  /* Mobile modal full-screen approach */
-  .modal {
-    padding: 0.5rem;
-  }
-
-  .modal-content {
-    width: 100%;
-    height: 95vh;
-    margin: 0;
-    border-radius: 1rem 1rem 0 0;
-  }
-
-  .modal-header h2 {
-    font-size: 1.125rem;
-  }
-
-  .timeline-event {
-    padding: 0.75rem 0;
-  }
-
-  .event-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.75rem;
-  }
-
-  .event-description {
-    font-size: 0.875rem;
-  }
-
-  .event-time {
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .order-management {
-    padding: 0.25rem;
-  }
-
-  .page-header {
-    padding: 0.5rem;
-    border-radius: 0.75rem;
-  }
-
-  /* Ultra-mobile card optimizations */
-  .orders-cards {
-    padding: 0.25rem;
-    gap: 0.5rem;
-  }
-
-  .order-card {
-    padding: 0.75rem;
-    border-radius: 0.625rem;
-  }
-
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .order-info {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .order-total {
-    font-size: 1rem;
-    align-self: flex-end;
-  }
-
-  .card-body {
-    gap: 0.625rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .status-section {
-    gap: 0.5rem;
-  }
-
-  .status-wrapper,
-  .staff-wrapper,
-  .staff-display {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.375rem;
-  }
-
-  .status-wrapper label,
-  .staff-wrapper label,
-  .staff-display label {
-    min-width: unset;
-    font-size: 0.75rem;
-  }
-
-  .status-select-mobile,
-  .staff-select-mobile {
-    width: 100%;
-    padding: 0.75rem;
-    font-size: 1rem;
-  }
-
-  .card-actions {
-    justify-content: space-between;
-    gap: 0.25rem;
-  }
-
-  .action-btn {
-    padding: 0.5rem;
-    min-width: 44px;
-    border-radius: 0.5rem;
-  }
-
-  .no-orders-message {
-    padding: 2rem 1rem;
-  }
-
-  .no-orders-message i {
-    font-size: 2rem;
-  }
-
-  .no-orders-message p {
-    font-size: 1rem;
-  }
-
-  .header-title h1 {
-    font-size: 1.125rem;
-    gap: 0.5rem;
-  }
-
-  .header-title h1 i {
-    font-size: 1rem;
-  }
-
-  .header-subtitle {
-    font-size: 0.75rem;
-  }
-
-  /* Compact stats for very small screens */
-  .header-stats {
-    gap: 0.25rem;
-  }
-
-  .stat-card {
-    padding: 0.375rem;
-    min-width: 50px;
-  }
-
-  .stat-number {
-    font-size: 0.875rem;
-  }
-
-  .stat-label {
-    font-size: 0.5rem;
-  }
-
-  /* Touch-friendly form elements */
-  .filter-select, .search-input, .export-btn {
-    min-height: 48px;
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
-
-  /* Simplified table for tiny screens */
-  .orders-table {
-    font-size: 0.75rem;
-  }
-
-  table {
-    min-width: 700px;
-  }
-
-  th, td {
-    padding: 0.375rem 0.125rem;
-    font-size: 0.7rem;
-  }
-
-  .no-orders-message {
-    padding: 2rem 1rem;
-    font-size: 0.875rem;
-  }
+  .order-management { padding: 1rem; }
+  .page-header { padding: 1.5rem; }
+  .header-top { flex-direction: column; align-items: stretch; gap: 1.5rem; }
+  .header-actions { flex-direction: column; align-items: stretch; }
+  .filters-section { flex-direction: column; }
+  .search-input { width: 100%; }
 }
 </style>
