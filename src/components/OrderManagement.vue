@@ -493,6 +493,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/authStore'
 import { useSettingsStore } from '../stores/settingsStore'
+import { useInventoryStore } from '../stores/inventoryStore'
 import ConfirmModal from './ConfirmModal.vue'
 import { format } from 'date-fns'
 import {
@@ -522,6 +523,7 @@ import BulkAssignModal from './BulkAssignModal.vue'
 
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
+const inventoryStore = useInventoryStore()
 const toast = useToast()
 
 // Constants
@@ -1098,11 +1100,16 @@ const handleCancelConfirm = async (reason) => {
       order.cancellationReason = reason
     }
 
+    // Restore stock if it was previously deducted
+    if (orderToCancel.value.items && orderToCancel.value.processed) {
+      await inventoryStore.restoreStock(orderId, orderToCancel.value.items)
+    }
+
     // Reset modal
     showCancelModal.value = false
     orderToCancel.value = null
 
-    toast.success('Order cancelled successfully!')
+    toast.success('Order cancelled and stock restored!')
   } catch (error) {
     console.error('Error cancelling order:', error)
     toast.error('Failed to cancel order. Please try again.')
@@ -1119,6 +1126,12 @@ const handleDeleteConfirm = async () => {
 
   try {
     const orderId = orderToDelete.value.id
+    
+    // Restore stock if it was previously deducted
+    if (orderToDelete.value.items && orderToDelete.value.processed) {
+      await inventoryStore.restoreStock(orderId, orderToDelete.value.items)
+    }
+
     await deleteDoc(doc(db, 'orders', orderId))
 
     // Remove from local state
@@ -1128,7 +1141,7 @@ const handleDeleteConfirm = async () => {
     showDeleteModal.value = false
     orderToDelete.value = null
 
-    toast.success('Order deleted successfully!')
+    toast.success('Order deleted and stock restored!')
   } catch (error) {
     console.error('Error deleting order:', error)
     toast.error('Failed to delete order. Please try again.')
@@ -1144,19 +1157,21 @@ const handleBulkDeleteConfirm = async () => {
 
   loading.value = true
   try {
-    // Delete all selected orders from Firebase
-    const deletePromises = selectedOrders.value.map(id => 
-      deleteDoc(doc(db, 'orders', id))
-    )
-    
-    await Promise.all(deletePromises)
+    // Process each selected order for stock restoration and deletion
+    for (const id of selectedOrders.value) {
+      const order = orders.value.find(o => o.id === id)
+      if (order && order.items && order.processed) {
+        await inventoryStore.restoreStock(id, order.items)
+      }
+      await deleteDoc(doc(db, 'orders', id))
+    }
 
     // Update local state
     orders.value = orders.value.filter(o => !selectedOrders.value.includes(o.id))
     selectedOrders.value = [] // Clear selection
 
     showBulkDeleteModal.value = false
-    toast.success('Successfully deleted selected orders!')
+    toast.success('Successfully deleted selected orders and restored stock!')
   } catch (error) {
     console.error('Error deleting multiple orders:', error)
     toast.error('Some orders could not be deleted. Please try again.')

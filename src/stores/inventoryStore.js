@@ -320,6 +320,48 @@ export const useInventoryStore = defineStore('inventory', () => {
     }
   }
 
+  const restoreStock = async (orderId, orderItems) => {
+    const batch = writeBatch(db)
+    try {
+      // If orderId provided, we'll check if it was processed
+      if (orderId) {
+        const orderRef = doc(db, 'orders', orderId)
+        const orderSnapshot = await getDoc(orderRef)
+        if (orderSnapshot.exists()) {
+          const data = orderSnapshot.data()
+          if (!data.processed) {
+            // Not processed, so stock was never deducted
+            return
+          }
+        }
+      }
+
+      // Restore each item in the order
+      for (const item of orderItems) {
+        const productRef = doc(db, 'inventory', item.id)
+        batch.update(productRef, {
+          currentStock: increment(item.quantity || 1),
+          lastUpdated: serverTimestamp()
+        })
+      }
+
+      // Mark order as not processed (or we'll delete it soon anyway)
+      if (orderId) {
+        const orderRef = doc(db, 'orders', orderId)
+        batch.update(orderRef, {
+          processed: false,
+          processedAt: null,
+          restoredAt: serverTimestamp()
+        })
+      }
+
+      await batch.commit()
+    } catch (error) {
+      console.error('Error restoring stock:', error)
+      throw error
+    }
+  }
+
   const getSalesByPeriod = async (startDate, endDate) => {
     try {
       const q = query(
@@ -485,6 +527,7 @@ export const useInventoryStore = defineStore('inventory', () => {
     updateStockAlerts,
     onLowStockItems,
     processOrder,
+    restoreStock,
     getSalesByPeriod,
     getProfitLoss,
     createStockAlert,
